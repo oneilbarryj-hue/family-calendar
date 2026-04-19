@@ -231,20 +231,29 @@ export default function Calendar({ session }) {
           .fc .fc-list-event-title { font-size: 0.85rem; }
         `}</style>
         <FullCalendar
-          plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin, listPlugin]}
-          initialView={view}
-          key={view}
-          headerToolbar={{
-            left: 'prev,next',
-            center: 'title',
-            right: 'today',
-          }}
-          events={events}
-          selectable={true}
-          select={openNew}
-          eventClick={openEdit}
-          height="100%"
-          dayMaxEvents={3}
+         plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin, listPlugin]}
+  initialView={view}
+  key={view}
+  headerToolbar={{
+    left: 'prev,next',
+    center: 'title',
+    right: 'today',
+  }}
+  events={events}
+  selectable={true}
+  selectMirror={true}
+  dateClick={(info) => {
+    const start = info.dateStr
+    const end = info.dateStr
+    openNew({
+      startStr: start,
+      endStr: end,
+      allDay: info.allDay,
+    })
+  }}
+  eventClick={openEdit}
+  height="100%"
+  dayMaxEvents={3}
         />
       </div>
 
