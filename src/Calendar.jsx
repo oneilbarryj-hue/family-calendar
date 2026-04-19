@@ -46,6 +46,8 @@ export default function Calendar({ session }) {
   const [events, setEvents] = useState([])
   const [modalOpen, setModalOpen] = useState(false)
   const [selectedEvent, setSelectedEvent] = useState(null)
+  const [view, setView] = useState('dayGridMonth')
+  const [showLegend, setShowLegend] = useState(false)
   const [form, setForm] = useState({
     title: '',
     start: '',
@@ -155,98 +157,160 @@ export default function Calendar({ session }) {
   const label = (str) => str.charAt(0).toUpperCase() + str.slice(1)
 
   return (
-    <div className="h-screen flex flex-col p-4 bg-gray-50">
-      <div className="flex justify-between items-center mb-2">
-        <h1 className="text-xl font-semibold">Family Calendar</h1>
-        <button onClick={() => supabase.auth.signOut()} className="text-sm text-gray-500 hover:text-gray-700">
-          Sign out
-        </button>
+    <div className="h-screen flex flex-col bg-gray-50 overflow-hidden">
+
+      {/* Header */}
+      <div className="flex items-center justify-between px-4 pt-4 pb-2">
+        <h1 className="text-xl font-bold text-gray-800">📅 Family</h1>
+        <div className="flex items-center gap-3">
+          <button onClick={() => setShowLegend(!showLegend)}
+            className="text-xs text-indigo-600 font-medium border border-indigo-200 rounded-full px-3 py-1">
+            {showLegend ? 'Hide legend' : 'Legend'}
+          </button>
+          <button onClick={() => supabase.auth.signOut()}
+            className="text-xs text-gray-400 hover:text-gray-600">
+            Sign out
+          </button>
+        </div>
       </div>
 
-      {/* Legend */}
-      <div className="flex flex-wrap gap-3 mb-3 text-xs">
-        {PERSONS.map(p => (
-          <span key={p} className="flex items-center gap-1">
-            <span className="w-2.5 h-2.5 rounded-full" style={{ background: PERSON_COLORS[p] }} />
-            {label(p)}
-          </span>
-        ))}
-        <span className="text-gray-300">|</span>
-        {CATEGORIES.map(c => (
-          <span key={c} className="flex items-center gap-1">
-            <span className="w-2.5 h-2.5 rounded-full" style={{ background: CATEGORY_COLORS[c] }} />
-            {label(c)}
-          </span>
+      {/* Collapsible Legend */}
+      {showLegend && (
+        <div className="px-4 pb-2 space-y-1">
+          <div className="flex flex-wrap gap-2 text-xs">
+            {PERSONS.map(p => (
+              <span key={p} className="flex items-center gap-1">
+                <span className="w-2.5 h-2.5 rounded-full" style={{ background: PERSON_COLORS[p] }} />
+                {label(p)}
+              </span>
+            ))}
+          </div>
+          <div className="flex flex-wrap gap-2 text-xs">
+            {CATEGORIES.map(c => (
+              <span key={c} className="flex items-center gap-1">
+                <span className="w-2.5 h-2.5 rounded-full" style={{ background: CATEGORY_COLORS[c] }} />
+                {label(c)}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* View switcher */}
+      <div className="flex gap-2 px-4 pb-2">
+        {[
+          { key: 'dayGridMonth', label: 'Month' },
+          { key: 'timeGridWeek', label: 'Week' },
+          { key: 'listWeek', label: 'List' },
+        ].map(v => (
+          <button key={v.key} onClick={() => setView(v.key)}
+            className="flex-1 py-1.5 rounded-xl text-sm font-medium transition"
+            style={{
+              background: view === v.key ? '#6366f1' : '#e5e7eb',
+              color: view === v.key ? 'white' : '#374151',
+            }}>
+            {v.label}
+          </button>
         ))}
       </div>
 
-      <div className="flex-1 bg-white rounded-2xl shadow-sm p-4">
+      {/* Calendar */}
+      <div className="flex-1 bg-white mx-4 mb-4 rounded-2xl shadow-sm p-2 overflow-hidden">
+        <style>{`
+          .fc .fc-toolbar { flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
+          .fc .fc-toolbar-title { font-size: 1.1rem; font-weight: 600; }
+          .fc .fc-button { padding: 4px 10px; font-size: 0.78rem; border-radius: 8px; border: none; background: #e5e7eb; color: #374151; }
+          .fc .fc-button:hover { background: #d1d5db; }
+          .fc .fc-button-primary:not(:disabled).fc-button-active, .fc .fc-today-button { background: #6366f1 !important; color: white !important; }
+          .fc .fc-col-header-cell-cushion { font-size: 0.72rem; padding: 4px 0; text-decoration: none; color: #6b7280; }
+          .fc .fc-daygrid-day-number { font-size: 0.8rem; padding: 2px 4px; text-decoration: none; color: inherit; }
+          .fc .fc-daygrid-day.fc-day-today { background: #eef2ff; }
+          .fc .fc-event { border-radius: 4px; font-size: 0.72rem; padding: 1px 3px; border: none; }
+          .fc td, .fc th { border-color: #f3f4f6; }
+          .fc .fc-timegrid-slot { height: 40px; }
+          .fc .fc-list-event-title { font-size: 0.85rem; }
+        `}</style>
         <FullCalendar
           plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin, listPlugin]}
-          initialView="dayGridMonth"
+          initialView={view}
+          key={view}
           headerToolbar={{
-            left: 'prev,next today',
+            left: 'prev,next',
             center: 'title',
-            right: 'dayGridMonth,timeGridWeek,listWeek'
+            right: 'today',
           }}
           events={events}
           selectable={true}
           select={openNew}
           eventClick={openEdit}
           height="100%"
+          dayMaxEvents={3}
         />
       </div>
 
-      {modalOpen && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl p-6 w-full max-w-sm mx-auto space-y-4 overflow-y-auto max-h-[90vh]">
-            <h2 className="text-lg font-semibold">{selectedEvent ? 'Edit Event' : 'New Event'}</h2>
+      {/* + Add Event button */}
+      <button
+        onClick={() => {
+          const now = new Date()
+          openNew({
+            startStr: now.toISOString(),
+            endStr: new Date(now.getTime() + 3600000).toISOString(),
+            allDay: false,
+          })
+        }}
+        className="fixed bottom-6 right-6 w-14 h-14 bg-indigo-600 text-white rounded-full shadow-lg text-3xl flex items-center justify-center z-40">
+        +
+      </button>
 
-            {/* Title */}
-            <input className="w-full border rounded-lg px-3 py-2" placeholder="Title"
+      {/* Modal */}
+      {modalOpen && (
+        <div className="fixed inset-0 bg-black/40 flex items-end justify-center z-50">
+          <div className="bg-white rounded-t-3xl p-6 w-full max-w-lg space-y-4 overflow-y-auto max-h-[92vh]">
+
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-semibold">{selectedEvent ? 'Edit Event' : 'New Event'}</h2>
+              <button onClick={() => setModalOpen(false)} className="text-gray-400 text-2xl leading-none">&times;</button>
+            </div>
+
+            <input className="w-full border border-gray-200 rounded-xl px-4 py-3 text-base focus:outline-none focus:ring-2 focus:ring-indigo-300"
+              placeholder="Event title"
               value={form.title} onChange={e => setForm({...form, title: e.target.value})} />
 
-            {/* All day toggle */}
-            <label className="flex items-center gap-2 text-sm">
+            <label className="flex items-center gap-2 text-sm text-gray-600">
               <input type="checkbox" checked={form.allDay}
                 onChange={e => setForm({...form, allDay: e.target.checked})} />
               All day
             </label>
 
-            {/* Start */}
             <div>
-              <label className="text-xs text-gray-500 block mb-1">Start</label>
-              <input
-                type={form.allDay ? 'date' : 'datetime-local'}
-                className="w-full border rounded-lg px-3 py-2 text-sm"
+              <label className="text-xs text-gray-400 uppercase tracking-wide block mb-1">Start</label>
+              <input type={form.allDay ? 'date' : 'datetime-local'}
+                className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300"
                 value={form.start?.slice(0, form.allDay ? 10 : 16)}
                 onChange={e => setForm({...form, start: e.target.value})} />
             </div>
 
-            {/* End */}
             <div>
-              <label className="text-xs text-gray-500 block mb-1">End</label>
-              <input
-                type={form.allDay ? 'date' : 'datetime-local'}
-                className="w-full border rounded-lg px-3 py-2 text-sm"
+              <label className="text-xs text-gray-400 uppercase tracking-wide block mb-1">End</label>
+              <input type={form.allDay ? 'date' : 'datetime-local'}
+                className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300"
                 value={form.end?.slice(0, form.allDay ? 10 : 16)}
                 onChange={e => setForm({...form, end: e.target.value})} />
             </div>
 
-            {/* Location */}
             <div>
-              <label className="text-xs text-gray-500 block mb-1">Location (optional)</label>
-              <input className="w-full border rounded-lg px-3 py-2 text-sm" placeholder="Add a location"
+              <label className="text-xs text-gray-400 uppercase tracking-wide block mb-1">Location</label>
+              <input className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300"
+                placeholder="Add a location"
                 value={form.location} onChange={e => setForm({...form, location: e.target.value})} />
             </div>
 
-            {/* Recurrence */}
             <div>
-              <label className="text-xs text-gray-500 block mb-1">Repeat</label>
+              <label className="text-xs text-gray-400 uppercase tracking-wide block mb-2">Repeat</label>
               <div className="flex gap-2 flex-wrap">
                 {RECURRENCE.map(r => (
                   <button key={r} onClick={() => setForm({...form, recurrence: r})}
-                    className="px-3 py-1.5 rounded-lg text-xs font-medium border-2 transition"
+                    className="px-3 py-2 rounded-xl text-sm font-medium border-2 transition"
                     style={{
                       background: form.recurrence === r ? '#6366f1' : 'transparent',
                       borderColor: '#6366f1',
@@ -258,13 +322,12 @@ export default function Calendar({ session }) {
               </div>
             </div>
 
-            {/* Person picker */}
             <div>
-              <label className="text-xs text-gray-500 block mb-1">Who is this for?</label>
+              <label className="text-xs text-gray-400 uppercase tracking-wide block mb-2">Who is this for?</label>
               <div className="flex flex-wrap gap-2">
                 {PERSONS.map(p => (
                   <button key={p} onClick={() => setForm({...form, person: p})}
-                    className="px-3 py-1.5 rounded-lg text-sm font-medium border-2 transition"
+                    className="px-3 py-2 rounded-xl text-sm font-medium border-2 transition"
                     style={{
                       background: form.person === p ? PERSON_COLORS[p] : 'transparent',
                       borderColor: PERSON_COLORS[p],
@@ -276,13 +339,12 @@ export default function Calendar({ session }) {
               </div>
             </div>
 
-            {/* Category picker */}
             <div>
-              <label className="text-xs text-gray-500 block mb-1">Category</label>
+              <label className="text-xs text-gray-400 uppercase tracking-wide block mb-2">Category</label>
               <div className="flex flex-wrap gap-2">
                 {CATEGORIES.map(c => (
                   <button key={c} onClick={() => setForm({...form, category: c})}
-                    className="px-3 py-1.5 rounded-lg text-xs font-medium border-2 transition"
+                    className="px-3 py-2 rounded-xl text-sm font-medium border-2 transition"
                     style={{
                       background: form.category === c ? CATEGORY_COLORS[c] : 'transparent',
                       borderColor: CATEGORY_COLORS[c],
@@ -294,20 +356,19 @@ export default function Calendar({ session }) {
               </div>
             </div>
 
-            {/* Buttons */}
-            <div className="flex gap-2 pt-2">
+            <div className="flex gap-2 pt-2 pb-2">
               <button onClick={saveEvent}
-                className="flex-1 bg-indigo-600 text-white rounded-lg py-2 text-sm font-medium">
+                className="flex-1 bg-indigo-600 text-white rounded-xl py-3 text-sm font-semibold">
                 Save
               </button>
               {selectedEvent && (
                 <button onClick={deleteEvent}
-                  className="flex-1 bg-red-100 text-red-600 rounded-lg py-2 text-sm font-medium">
+                  className="flex-1 bg-red-50 text-red-500 rounded-xl py-3 text-sm font-semibold">
                   Delete
                 </button>
               )}
               <button onClick={() => setModalOpen(false)}
-                className="flex-1 bg-gray-100 text-gray-700 rounded-lg py-2 text-sm font-medium">
+                className="flex-1 bg-gray-100 text-gray-600 rounded-xl py-3 text-sm font-semibold">
                 Cancel
               </button>
             </div>
