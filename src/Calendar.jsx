@@ -7,29 +7,39 @@ import listPlugin from '@fullcalendar/list'
 import { supabase } from './supabaseClient'
 
 const PERSON_COLORS = {
-  chip: '#6366f1',        // indigo
-  cristina: '#ec4899',    // pink
-  lucia: '#f59e0b',       // amber
-  bennett: '#3b82f6',     // blue
-  family: '#10b981',      // emerald
+  chip: '#6366f1',
+  cristina: '#ec4899',
+  lucia: '#f59e0b',
+  bennett: '#3b82f6',
+  family: '#10b981',
 }
 
 const CATEGORY_COLORS = {
-  work: '#64748b',        // slate
-  school: '#8b5cf6',      // violet
-  health: '#ef4444',      // red
-  sports: '#f97316',      // orange
-  social: '#06b6d4',      // cyan
-  other: '#6b7280',       // gray
+  work: '#64748b',
+  school: '#8b5cf6',
+  health: '#ef4444',
+  sports: '#f97316',
+  social: '#06b6d4',
+  other: '#6b7280',
 }
 
 const PERSONS = ['chip', 'cristina', 'lucia', 'bennett', 'family']
 const CATEGORIES = ['work', 'school', 'health', 'sports', 'social', 'other']
+const RECURRENCE = ['none', 'weekly', 'monthly', 'annually']
 
 function getColor(person, category) {
-  return CATEGORY_COLORS[category] !== '#6b7280'
+  return category !== 'other'
     ? CATEGORY_COLORS[category]
     : PERSON_COLORS[person] || '#10b981'
+}
+
+function buildRRule(recurrence) {
+  switch (recurrence) {
+    case 'weekly': return 'RRULE:FREQ=WEEKLY'
+    case 'monthly': return 'RRULE:FREQ=MONTHLY'
+    case 'annually': return 'RRULE:FREQ=YEARLY'
+    default: return null
+  }
 }
 
 export default function Calendar({ session }) {
@@ -43,24 +53,33 @@ export default function Calendar({ session }) {
     allDay: false,
     person: 'family',
     category: 'other',
+    location: '',
+    recurrence: 'none',
   })
 
   const fetchEvents = async () => {
     const { data } = await supabase.from('events').select('*')
-    setEvents(data?.map(e => ({
-      id: e.id,
-      title: e.title,
-      start: e.start_time,
-      end: e.end_time,
-      allDay: e.all_day,
-      backgroundColor: e.color,
-      borderColor: e.color,
-      textColor: '#ffffff',
-      extendedProps: {
-        person: e.person,
-        category: e.category,
-      }
-    })) || [])
+    const expanded = []
+    data?.forEach(e => {
+      expanded.push({
+        id: e.id,
+        title: e.title,
+        start: e.start_time,
+        end: e.end_time,
+        allDay: e.all_day,
+        backgroundColor: e.color,
+        borderColor: e.color,
+        textColor: '#ffffff',
+        rrule: e.recurrence ? buildRRule(e.recurrence)?.replace('RRULE:', '') : undefined,
+        extendedProps: {
+          person: e.person,
+          category: e.category,
+          location: e.location,
+          recurrence: e.recurrence,
+        }
+      })
+    })
+    setEvents(expanded)
   }
 
   useEffect(() => {
@@ -80,6 +99,8 @@ export default function Calendar({ session }) {
       allDay: selectInfo.allDay,
       person: 'family',
       category: 'other',
+      location: '',
+      recurrence: 'none',
     })
     setModalOpen(true)
   }
@@ -94,6 +115,8 @@ export default function Calendar({ session }) {
       allDay: ev.allDay,
       person: ev.extendedProps.person || 'family',
       category: ev.extendedProps.category || 'other',
+      location: ev.extendedProps.location || '',
+      recurrence: ev.extendedProps.recurrence || 'none',
     })
     setModalOpen(true)
   }
@@ -108,6 +131,8 @@ export default function Calendar({ session }) {
       color,
       person: form.person,
       category: form.category,
+      location: form.location || null,
+      recurrence: form.recurrence !== 'none' ? form.recurrence : null,
       user_id: session.user.id,
     }
     if (selectedEvent) {
@@ -173,35 +198,69 @@ export default function Calendar({ session }) {
       </div>
 
       {modalOpen && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-          <div className="bg-white rounded-2xl p-6 w-full max-w-sm mx-4 space-y-4">
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl p-6 w-full max-w-sm mx-auto space-y-4 overflow-y-auto max-h-[90vh]">
             <h2 className="text-lg font-semibold">{selectedEvent ? 'Edit Event' : 'New Event'}</h2>
 
+            {/* Title */}
             <input className="w-full border rounded-lg px-3 py-2" placeholder="Title"
               value={form.title} onChange={e => setForm({...form, title: e.target.value})} />
 
-            <div className="flex gap-2">
-              <div className="flex-1">
-                <label className="text-xs text-gray-500">Start</label>
-                <input type="datetime-local" className="w-full border rounded-lg px-3 py-2 text-sm"
-                  value={form.start?.slice(0,16)} onChange={e => setForm({...form, start: e.target.value})} />
-              </div>
-              <div className="flex-1">
-                <label className="text-xs text-gray-500">End</label>
-                <input type="datetime-local" className="w-full border rounded-lg px-3 py-2 text-sm"
-                  value={form.end?.slice(0,16)} onChange={e => setForm({...form, end: e.target.value})} />
-              </div>
-            </div>
-
+            {/* All day toggle */}
             <label className="flex items-center gap-2 text-sm">
               <input type="checkbox" checked={form.allDay}
                 onChange={e => setForm({...form, allDay: e.target.checked})} />
               All day
             </label>
 
+            {/* Start */}
+            <div>
+              <label className="text-xs text-gray-500 block mb-1">Start</label>
+              <input
+                type={form.allDay ? 'date' : 'datetime-local'}
+                className="w-full border rounded-lg px-3 py-2 text-sm"
+                value={form.start?.slice(0, form.allDay ? 10 : 16)}
+                onChange={e => setForm({...form, start: e.target.value})} />
+            </div>
+
+            {/* End */}
+            <div>
+              <label className="text-xs text-gray-500 block mb-1">End</label>
+              <input
+                type={form.allDay ? 'date' : 'datetime-local'}
+                className="w-full border rounded-lg px-3 py-2 text-sm"
+                value={form.end?.slice(0, form.allDay ? 10 : 16)}
+                onChange={e => setForm({...form, end: e.target.value})} />
+            </div>
+
+            {/* Location */}
+            <div>
+              <label className="text-xs text-gray-500 block mb-1">Location (optional)</label>
+              <input className="w-full border rounded-lg px-3 py-2 text-sm" placeholder="Add a location"
+                value={form.location} onChange={e => setForm({...form, location: e.target.value})} />
+            </div>
+
+            {/* Recurrence */}
+            <div>
+              <label className="text-xs text-gray-500 block mb-1">Repeat</label>
+              <div className="flex gap-2 flex-wrap">
+                {RECURRENCE.map(r => (
+                  <button key={r} onClick={() => setForm({...form, recurrence: r})}
+                    className="px-3 py-1.5 rounded-lg text-xs font-medium border-2 transition"
+                    style={{
+                      background: form.recurrence === r ? '#6366f1' : 'transparent',
+                      borderColor: '#6366f1',
+                      color: form.recurrence === r ? 'white' : '#6366f1',
+                    }}>
+                    {label(r)}
+                  </button>
+                ))}
+              </div>
+            </div>
+
             {/* Person picker */}
             <div>
-              <label className="text-xs text-gray-500 mb-1 block">Who is this for?</label>
+              <label className="text-xs text-gray-500 block mb-1">Who is this for?</label>
               <div className="flex flex-wrap gap-2">
                 {PERSONS.map(p => (
                   <button key={p} onClick={() => setForm({...form, person: p})}
@@ -219,7 +278,7 @@ export default function Calendar({ session }) {
 
             {/* Category picker */}
             <div>
-              <label className="text-xs text-gray-500 mb-1 block">Category</label>
+              <label className="text-xs text-gray-500 block mb-1">Category</label>
               <div className="flex flex-wrap gap-2">
                 {CATEGORIES.map(c => (
                   <button key={c} onClick={() => setForm({...form, category: c})}
@@ -235,6 +294,7 @@ export default function Calendar({ session }) {
               </div>
             </div>
 
+            {/* Buttons */}
             <div className="flex gap-2 pt-2">
               <button onClick={saveEvent}
                 className="flex-1 bg-indigo-600 text-white rounded-lg py-2 text-sm font-medium">
