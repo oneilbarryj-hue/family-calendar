@@ -161,7 +161,7 @@ export default function Calendar({ session }) {
 
       {/* Header */}
       <div className="flex items-center justify-between px-4 pt-4 pb-2">
-        <h1 className="text-xl font-bold text-gray-800">📅 Family</h1>
+        <h1 className="text-xl font-bold text-gray-800">📅 O'Neil Family Calendar</h1>
         <div className="flex items-center gap-3">
           <button onClick={() => setShowLegend(!showLegend)}
             className="text-xs text-indigo-600 font-medium border border-indigo-200 rounded-full px-3 py-1">
