@@ -55,22 +55,38 @@ function buildRRule(recurrence) {
   }
 }
 
+function generateTimeOptions() {
+  const times = []
+  for (let h = 0; h < 24; h++) {
+    for (let m = 0; m < 60; m += 15) {
+      const hour = String(h).padStart(2, '0')
+      const min = String(m).padStart(2, '0')
+      const label12 = `${h === 0 ? 12 : h > 12 ? h - 12 : h}:${min} ${h < 12 ? 'AM' : 'PM'}`
+      times.push({ value: `${hour}:${min}`, label: label12 })
+    }
+  }
+  return times
+}
+const TIME_OPTIONS = generateTimeOptions()
+
 export default function Calendar({ session }) {
   const [events, setEvents] = useState([])
   const [modalOpen, setModalOpen] = useState(false)
   const [selectedEvent, setSelectedEvent] = useState(null)
   const [view, setView] = useState('dayGridMonth')
   const [showLegend, setShowLegend] = useState(false)
-  const [form, setForm] = useState({
-    title: '',
-    start: '',
-    end: '',
-    allDay: false,
-    person: 'family',
-    category: 'other',
-    location: '',
-    recurrence: 'none',
-  })
+const [form, setForm] = useState({
+  title: '',
+  start: '',
+  end: '',
+  allDay: false,
+  person: 'family',
+  category: 'other',
+  location: '',
+  recurrence: 'none',
+  recurrence_end: '',
+  reminder: 30,
+})
   const [weather, setWeather] = useState({})
 
 const fetchEvents = async () => {
@@ -80,11 +96,10 @@ const fetchEvents = async () => {
     const categoryLabel = e.category && e.category !== 'other'
       ? `${getCategoryEmoji(e.category)} ${e.title}`
       : e.title
-    expanded.push({
+
+    const eventObj = {
       id: e.id,
       title: categoryLabel,
-      start: e.start_time,
-      end: e.end_time,
       allDay: e.all_day,
       backgroundColor: PERSON_COLORS[e.person] || '#10b981',
       borderColor: PERSON_COLORS[e.person] || '#10b981',
@@ -94,10 +109,36 @@ const fetchEvents = async () => {
         category: e.category,
         location: e.location,
         recurrence: e.recurrence,
+          recurrence_end: e.recurrence_end,
         reminder: e.reminder,
         rawTitle: e.title,
       }
-    })
+    }
+
+    if (e.recurrence && e.recurrence !== 'none') {
+      // rrule format needs dtstart
+      const dtstart = e.start_time
+      const duration = e.end_time
+        ? new Date(e.end_time) - new Date(e.start_time)
+        : 3600000
+
+      let freq
+      if (e.recurrence === 'weekly') freq = 'WEEKLY'
+      else if (e.recurrence === 'monthly') freq = 'MONTHLY'
+      else if (e.recurrence === 'annually') freq = 'YEARLY'
+
+      eventObj.rrule = {
+        freq,
+        dtstart,
+         until: e.recurrence_end ? new Date(e.recurrence_end) : undefined,
+      }
+      eventObj.duration = { milliseconds: duration }
+    } else {
+      eventObj.start = e.start_time
+      eventObj.end = e.end_time
+    }
+
+    expanded.push(eventObj)
   })
   setEvents(expanded)
 }
@@ -116,26 +157,48 @@ useEffect(() => {
   return () => supabase.removeChannel(channel)
 }, [])
 
-  const openNew = (selectInfo) => {
-    setSelectedEvent(null)
-    setForm({
-      title: '',
-      start: selectInfo.startStr,
-      end: selectInfo.endStr,
-      allDay: selectInfo.allDay,
-      person: 'family',
-      category: 'other',
-      location: '',
-      recurrence: 'none',
-    })
-    setModalOpen(true)
+  const openNew = (info) => {
+  setSelectedEvent(null)
+  
+  // Build a clean local start string
+  let startStr = info.startStr
+  if (startStr && startStr.endsWith('Z')) {
+    const d = new Date(startStr)
+    startStr = d.getFullYear() + '-' +
+      String(d.getMonth() + 1).padStart(2, '0') + '-' +
+      String(d.getDate()).padStart(2, '0') + 'T' +
+      String(d.getHours()).padStart(2, '0') + ':' +
+      String(d.getMinutes()).padStart(2, '0')
   }
 
- const openEdit = (clickInfo) => {
+  // Auto set end to 1 hour after start
+  const endDate = new Date(startStr)
+  endDate.setHours(endDate.getHours() + 1)
+  const endStr = endDate.getFullYear() + '-' +
+    String(endDate.getMonth() + 1).padStart(2, '0') + '-' +
+    String(endDate.getDate()).padStart(2, '0') + 'T' +
+    String(endDate.getHours()).padStart(2, '0') + ':' +
+    String(endDate.getMinutes()).padStart(2, '0')
+
+  setForm({
+    title: '',
+    start: startStr,
+    end: endStr,
+    allDay: false,
+    person: 'family',
+    category: 'other',
+    location: '',
+    recurrence: 'none',
+    reminder: 30,
+  })
+  setModalOpen(true)
+}
+
+const openEdit = (clickInfo) => {
   const ev = clickInfo.event
   setSelectedEvent(ev)
   setForm({
-    title: ev.extendedProps.rawTitle || ev.title.replace(/[\u{1F300}-\u{1FFFF}]|\u26½|\u26BD|\u26BF/gu, '').trim(),
+    title: ev.extendedProps.rawTitle || ev.title,
     start: ev.startStr,
     end: ev.endStr || '',
     allDay: ev.allDay,
@@ -143,41 +206,65 @@ useEffect(() => {
     category: ev.extendedProps.category || 'other',
     location: ev.extendedProps.location || '',
     recurrence: ev.extendedProps.recurrence || 'none',
+    recurrence_end: ev.extendedProps.recurrence_end || '',
     reminder: ev.extendedProps.reminder || 30,
   })
   setModalOpen(true)
 }
-
-  const saveEvent = async () => {
-    const color = getColor(form.person, form.category)
-    const payload = {
-      title: form.title,
-      start_time: form.start,
-      end_time: form.end || null,
-      all_day: form.allDay,
-      color,
-      person: form.person,
-      category: form.category,
-      location: form.location || null,
-      recurrence: form.recurrence !== 'none' ? form.recurrence : null,
-      user_id: session.user.id,
-    }
-    if (selectedEvent) {
-      await supabase.from('events').update(payload).eq('id', selectedEvent.id)
-    } else {
-      await supabase.from('events').insert(payload)
-    }
+const deleteEvent = async () => {
+  if (selectedEvent) {
+    await supabase.from('events').delete().eq('id', selectedEvent.id)
     setModalOpen(false)
     fetchEvents()
   }
+}
+const saveEvent = async () => {
+  const color = getColor(form.person, form.category)
 
-  const deleteEvent = async () => {
-    if (selectedEvent) {
-      await supabase.from('events').delete().eq('id', selectedEvent.id)
-      setModalOpen(false)
-      fetchEvents()
-    }
+
+const toISO = (str) => {
+  if (!str) return null
+  // If already a Z UTC string, convert to local time first
+  if (str.endsWith('Z')) {
+    return str
   }
+  // datetime-local gives us "2026-04-26T10:00" without timezone
+  // We need to treat it as local time
+  const [datePart, timePart] = str.split('T')
+  if (!timePart) return str
+  const [year, month, day] = datePart.split('-').map(Number)
+  const [hour, minute] = timePart.split(':').map(Number)
+  const d = new Date(year, month - 1, day, hour, minute)
+  return d.toISOString()
+}
+
+  console.log('Saving start:', toISO(form.start), 'Raw:', form.start)
+
+  console.log('Saving start:', toISO(form.start), 'Raw:', form.start)
+
+  const payload = {
+    title: form.title,
+    start_time: form.allDay ? form.start : toISO(form.start),
+    end_time: form.end ? (form.allDay ? form.end : toISO(form.end)) : null,
+    all_day: form.allDay,
+    color,
+    person: form.person,
+    category: form.category,
+    location: form.location || null,
+    recurrence: form.recurrence !== 'none' ? form.recurrence : null,
+      recurrence_end: form.recurrence_end || null,
+    reminder: form.reminder || 30,
+    user_id: session.user.id,
+  }
+
+  if (selectedEvent) {
+    await supabase.from('events').update(payload).eq('id', selectedEvent.id)
+  } else {
+    await supabase.from('events').insert(payload)
+  }
+  setModalOpen(false)
+  fetchEvents()
+}
 
   const label = (str) => str.charAt(0).toUpperCase() + str.slice(1)
 
@@ -282,6 +369,7 @@ useEffect(() => {
       startStr: start,
       endStr: end,
       allDay: info.allDay,
+      recurrence_end: '',
     })
   }}
   eventClick={openEdit}
@@ -318,14 +406,19 @@ useEffect(() => {
 
       {/* + Add Event button */}
       <button
-        onClick={() => {
-          const now = new Date()
-          openNew({
-            startStr: now.toISOString(),
-            endStr: new Date(now.getTime() + 3600000).toISOString(),
-            allDay: false,
-          })
-        }}
+onClick={() => {
+  const now = new Date()
+  const localStr = now.getFullYear() + '-' +
+    String(now.getMonth() + 1).padStart(2, '0') + '-' +
+    String(now.getDate()).padStart(2, '0') + 'T' +
+    String(now.getHours()).padStart(2, '0') + ':' +
+    String(now.getMinutes()).padStart(2, '0')
+  openNew({
+    startStr: localStr,
+    endStr: localStr,
+    allDay: false,
+  })
+}}
         className="fixed bottom-6 right-6 w-14 h-14 bg-indigo-600 text-white rounded-full shadow-lg text-3xl flex items-center justify-center z-40">
         +
       </button>
@@ -350,21 +443,83 @@ useEffect(() => {
               All day
             </label>
 
-            <div>
-              <label className="text-xs text-gray-400 uppercase tracking-wide block mb-1">Start</label>
-              <input type={form.allDay ? 'date' : 'datetime-local'}
-                className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300"
-                value={form.start?.slice(0, form.allDay ? 10 : 16)}
-                onChange={e => setForm({...form, start: e.target.value})} />
-            </div>
+<div>
+  <label className="text-xs text-gray-400 uppercase tracking-wide block mb-1">Start</label>
+  {form.allDay ? (
+    <input type="date"
+      className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300"
+      value={form.start?.slice(0, 10)}
+      onChange={e => setForm({...form, start: e.target.value})} />
+  ) : (
+    <div className="flex gap-2">
+      <input type="date"
+        className="flex-1 border border-gray-200 rounded-xl px-3 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300"
+        value={form.start?.slice(0, 10)}
+        onChange={e => {
+          const timePart = form.start?.slice(11, 16) || '09:00'
+          const newStart = `${e.target.value}T${timePart}`
+          const endDate = new Date(newStart)
+          endDate.setHours(endDate.getHours() + 1)
+          const newEnd = endDate.getFullYear() + '-' +
+            String(endDate.getMonth() + 1).padStart(2, '0') + '-' +
+            String(endDate.getDate()).padStart(2, '0') + 'T' +
+            String(endDate.getHours()).padStart(2, '0') + ':' +
+            String(endDate.getMinutes()).padStart(2, '0')
+          setForm({...form, start: newStart, end: newEnd})
+        }} />
+      <select
+        className="border border-gray-200 rounded-xl px-3 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300"
+        value={form.start?.slice(11, 16) || '09:00'}
+        onChange={e => {
+          const datePart = form.start?.slice(0, 10) || new Date().toISOString().slice(0, 10)
+          const newStart = `${datePart}T${e.target.value}`
+          const endDate = new Date(newStart)
+          endDate.setHours(endDate.getHours() + 1)
+          const newEnd = endDate.getFullYear() + '-' +
+            String(endDate.getMonth() + 1).padStart(2, '0') + '-' +
+            String(endDate.getDate()).padStart(2, '0') + 'T' +
+            String(endDate.getHours()).padStart(2, '0') + ':' +
+            String(endDate.getMinutes()).padStart(2, '0')
+          setForm({...form, start: newStart, end: newEnd})
+        }}>
+        {TIME_OPTIONS.map(t => (
+          <option key={t.value} value={t.value}>{t.label}</option>
+        ))}
+      </select>
+    </div>
+  )}
+</div>
 
-            <div>
-              <label className="text-xs text-gray-400 uppercase tracking-wide block mb-1">End</label>
-              <input type={form.allDay ? 'date' : 'datetime-local'}
-                className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300"
-                value={form.end?.slice(0, form.allDay ? 10 : 16)}
-                onChange={e => setForm({...form, end: e.target.value})} />
-            </div>
+<div>
+  <label className="text-xs text-gray-400 uppercase tracking-wide block mb-1">End</label>
+  {form.allDay ? (
+    <input type="date"
+      className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300"
+      value={form.end?.slice(0, 10)}
+      onChange={e => setForm({...form, end: e.target.value})} />
+  ) : (
+    <div className="flex gap-2">
+      <input type="date"
+        className="flex-1 border border-gray-200 rounded-xl px-3 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300"
+        value={form.end?.slice(0, 10)}
+        onChange={e => {
+          const timePart = form.end?.slice(11, 16) || '10:00'
+          setForm({...form, end: `${e.target.value}T${timePart}`})
+        }} />
+      <select
+        className="border border-gray-200 rounded-xl px-3 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300"
+        value={form.end?.slice(11, 16) || '10:00'}
+        onChange={e => {
+          const datePart = form.end?.slice(0, 10) || new Date().toISOString().slice(0, 10)
+          setForm({...form, end: `${datePart}T${e.target.value}`})
+        }}>
+        {TIME_OPTIONS.map(t => (
+          <option key={t.value} value={t.value}>{t.label}</option>
+        ))}
+      </select>
+    </div>
+  )}
+</div>
 
             <div>
               <label className="text-xs text-gray-400 uppercase tracking-wide block mb-1">Location</label>
@@ -389,7 +544,18 @@ useEffect(() => {
                 ))}
               </div>
             </div>
-
+{form.recurrence !== 'none' && (
+  <div>
+    <label className="text-xs text-gray-400 uppercase tracking-wide block mb-1">
+      Repeat ends (optional)
+    </label>
+    <input
+      type="date"
+      className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300"
+      value={form.recurrence_end}
+      onChange={e => setForm({...form, recurrence_end: e.target.value})} />
+  </div>
+)}
             <div>
               <label className="text-xs text-gray-400 uppercase tracking-wide block mb-2">Who is this for?</label>
               <div className="flex flex-wrap gap-2">
