@@ -41,8 +41,8 @@ function getCategoryEmoji(category) {
 
 function getColor(person, category) {
   return PERSON_COLORS[person] || '#10b981'
-}'
 }
+
 
 function buildRRule(recurrence) {
   switch (recurrence) {
@@ -176,7 +176,7 @@ const fetchEvents = async () => {
 
       {/* Header */}
       <div className="flex items-center justify-between px-4 pt-4 pb-2">
-        <h1 className="text-xl font-bold text-gray-800">📅 O'Neil Family Calendar</h1>
+        <h1 className="text-xl font-bold text-gray-800">📅 ONeil Family Calendar</h1>
         <div className="flex items-center gap-3">
           <button onClick={() => setShowLegend(!showLegend)}
             className="text-xs text-indigo-600 font-medium border border-indigo-200 rounded-full px-3 py-1">
