@@ -14,8 +14,12 @@ const WMO_CODES = {
 }
 
 export async function fetchWeeklyWeather() {
-  const today = new Date()
-  const start = today.toISOString().slice(0, 10)
+ const today = new Date()
+const startOfWeek = new Date(today)
+startOfWeek.setDate(today.getDate() - today.getDay())
+const start = startOfWeek.getFullYear() + '-' +
+  String(startOfWeek.getMonth() + 1).padStart(2, '0') + '-' +
+  String(startOfWeek.getDate()).padStart(2, '0')
   const end = new Date(today.getTime() + 7 * 24 * 60 * 60 * 1000)
     .toISOString().slice(0, 10)
 

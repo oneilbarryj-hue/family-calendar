@@ -6,6 +6,7 @@ import interactionPlugin from '@fullcalendar/interaction'
 import listPlugin from '@fullcalendar/list'
 import { supabase } from './supabaseClient'
 import { fetchWeeklyWeather } from './weather'
+import rrulePlugin from '@fullcalendar/rrule'
 
 const PERSON_COLORS = {
   chip: '#6366f1',
@@ -101,14 +102,19 @@ const fetchEvents = async () => {
   setEvents(expanded)
 }
 
-  useEffect(() => {
-    fetchEvents()
-    const channel = supabase.channel('events-changes')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'events' }, fetchEvents)
-      .subscribe()
-    return () => supabase.removeChannel(channel)
-    fetchWeeklyWeather().then(setWeather)
-  }, [])
+useEffect(() => {
+  fetchEvents()
+  const channel = supabase.channel('events-changes')
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'events' }, fetchEvents)
+    .subscribe()
+
+  fetchWeeklyWeather().then(data => {
+    console.log('Weather data:', data)
+    setWeather(data)
+  })
+
+  return () => supabase.removeChannel(channel)
+}, [])
 
   const openNew = (selectInfo) => {
     setSelectedEvent(null)
@@ -125,21 +131,22 @@ const fetchEvents = async () => {
     setModalOpen(true)
   }
 
-  const openEdit = (clickInfo) => {
-    const ev = clickInfo.event
-    setSelectedEvent(ev)
-    setForm({
-      title: ev.title,
-      start: ev.startStr,
-      end: ev.endStr || '',
-      allDay: ev.allDay,
-      person: ev.extendedProps.person || 'family',
-      category: ev.extendedProps.category || 'other',
-      location: ev.extendedProps.location || '',
-      recurrence: ev.extendedProps.recurrence || 'none',
-    })
-    setModalOpen(true)
-  }
+ const openEdit = (clickInfo) => {
+  const ev = clickInfo.event
+  setSelectedEvent(ev)
+  setForm({
+    title: ev.extendedProps.rawTitle || ev.title.replace(/[\u{1F300}-\u{1FFFF}]|\u26½|\u26BD|\u26BF/gu, '').trim(),
+    start: ev.startStr,
+    end: ev.endStr || '',
+    allDay: ev.allDay,
+    person: ev.extendedProps.person || 'family',
+    category: ev.extendedProps.category || 'other',
+    location: ev.extendedProps.location || '',
+    recurrence: ev.extendedProps.recurrence || 'none',
+    reminder: ev.extendedProps.reminder || 30,
+  })
+  setModalOpen(true)
+}
 
   const saveEvent = async () => {
     const color = getColor(form.person, form.category)
@@ -257,7 +264,7 @@ const fetchEvents = async () => {
 .weather-tag { font-size: 0.7rem; color: #6b7280; text-align: center; padding-bottom: 4px; line-height: 1.3; }
         `}</style>
         <FullCalendar
-         plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin, listPlugin]}
+         plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin, listPlugin, rrulePlugin]}
   initialView={view}
   key={view}
   headerToolbar={{
@@ -281,10 +288,13 @@ const fetchEvents = async () => {
   height="100%"
   dayMaxEvents={3}
   dayHeaderContent={(args) => {
-  const dateStr = args.date.toISOString().slice(0, 10)
+  const d = new Date(args.date)
+  const dateStr = d.getFullYear() + '-' +
+    String(d.getMonth() + 1).padStart(2, '0') + '-' +
+    String(d.getDate()).padStart(2, '0')
   const w = weather[dateStr]
-  const dayName = args.date.toLocaleDateString('en-US', { weekday: 'short' })
-  const dayNum = args.date.getDate()
+  const dayName = d.toLocaleDateString('en-US', { weekday: 'short' })
+  const dayNum = d.getDate()
   return (
     <div style={{ textAlign: 'center', padding: '4px 0' }}>
       <div style={{ fontSize: '0.72rem', color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
