@@ -93,9 +93,7 @@ const fetchEvents = async () => {
   const { data } = await supabase.from('events').select('*')
   const expanded = []
   data?.forEach(e => {
-    const categoryLabel = e.category && e.category !== 'other'
-      ? `${getCategoryEmoji(e.category)} ${e.title}`
-      : e.title
+const categoryLabel = e.title
 
     const eventObj = {
       id: e.id,
@@ -290,16 +288,17 @@ const toISO = (str) => {
 {showLegend && (
   <div className="px-4 pb-2 space-y-2">
     <div>
-      <p className="text-xs text-gray-400 uppercase tracking-wide mb-1">People</p>
-      <div className="flex flex-wrap gap-2 text-xs">
-        {PERSONS.map(p => (
-          <span key={p} className="flex items-center gap-1.5 bg-white border border-gray-100 rounded-full px-2.5 py-1 shadow-sm">
-            <span className="w-2.5 h-2.5 rounded-full" style={{ background: PERSON_COLORS[p] }} />
-            {label(p)}
-          </span>
-        ))}
-      </div>
-    </div>
+  <p className="text-xs text-gray-400 uppercase tracking-wide mb-1">People</p>
+  <div className="flex flex-wrap gap-2 text-xs">
+    {PERSONS.map(p => (
+      <span key={p}
+        className="px-3 py-1 rounded-full text-white font-medium text-xs"
+        style={{ background: PERSON_COLORS[p] }}>
+        {label(p)}
+      </span>
+    ))}
+  </div>
+</div>
     <div>
       <p className="text-xs text-gray-400 uppercase tracking-wide mb-1">Categories</p>
       <div className="flex flex-wrap gap-2 text-xs">
@@ -331,24 +330,47 @@ const toISO = (str) => {
         ))}
       </div>
 
-      {/* Calendar */}
+{/* Calendar */}
       <div className="flex-1 bg-white mx-4 mb-4 rounded-2xl shadow-sm p-2 overflow-hidden">
         <style>{`
+          .fc { font-family: 'Nunito', sans-serif; }
           .fc .fc-toolbar { flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
-          .fc .fc-toolbar-title { font-size: 1.1rem; font-weight: 600; }
-          .fc .fc-button { padding: 4px 10px; font-size: 0.78rem; border-radius: 8px; border: none; background: #e5e7eb; color: #374151; }
-          .fc .fc-button:hover { background: #d1d5db; }
-          .fc .fc-button-primary:not(:disabled).fc-button-active, .fc .fc-today-button { background: #6366f1 !important; color: white !important; }
-          .fc .fc-col-header-cell-cushion { font-size: 0.72rem; padding: 4px 0; text-decoration: none; color: #6b7280; }
-          .fc .fc-daygrid-day-number { font-size: 0.8rem; padding: 2px 4px; text-decoration: none; color: inherit; }
-          .fc .fc-daygrid-day.fc-day-today { background: #eef2ff; }
-          .fc .fc-event { border-radius: 4px; font-size: 0.72rem; padding: 1px 3px; border: none; }
+          .fc .fc-toolbar-title { font-size: 1.1rem; font-weight: 700; color: #111827; }
+          .fc .fc-button { padding: 4px 10px; font-size: 0.78rem; border-radius: 8px; border: none; background: #f3f4f6; color: #374151; font-weight: 600; }
+          .fc .fc-button:hover { background: #e5e7eb; }
+          .fc .fc-button-primary:not(:disabled).fc-button-active,
+          .fc .fc-today-button { background: #6366f1 !important; color: white !important; }
+          .fc .fc-col-header-cell { border: none; background: transparent; }
+          .fc .fc-col-header-cell-cushion { font-size: 0.72rem; font-weight: 700; padding: 4px 0 2px; text-decoration: none; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.08em; }
+          .fc .fc-col-header { border-bottom: 2px solid #f3f4f6; }
+          .fc .fc-day-today { background: #fafafa !important; }
+          .fc .fc-day-today .fc-col-header-cell-cushion { color: #6366f1 !important; }
+          .fc .fc-timegrid-slot-label { font-size: 0.65rem; color: #d1d5db; font-weight: 500; border: none; padding-right: 6px; vertical-align: top; width: 36px !important; }
+          .fc .fc-timegrid-slot-label-cushion { padding: 0 4px 0 0; }
+          .fc .fc-timegrid-slot { border-color: #f9fafb; height: 40px; }
+          .fc .fc-timegrid-slot-minor { border-color: transparent; }
           .fc td, .fc th { border-color: #f3f4f6; }
-          .fc .fc-timegrid-slot { height: 40px; }
-          .fc .fc-list-event-title { font-size: 0.85rem; }
+          .fc .fc-scrollgrid { border: none; }
+          .fc .fc-scrollgrid-section > td { border: none; }
+          .fc .fc-timegrid-col { border-color: #f3f4f6; }
+          .fc .fc-timegrid-event { border-radius: 10px !important; border: none !important; box-shadow: 0 1px 3px rgba(0,0,0,0.1); margin: 1px 2px; }
+          .fc .fc-timegrid-event .fc-event-main { padding: 3px 6px; }
+          .fc .fc-event-time { font-size: 0.65rem; font-weight: 600; opacity: 0.85; }
+          .fc .fc-event-title { font-size: 0.75rem; font-weight: 700; }
+          .fc .fc-timegrid-now-indicator-line { border-color: #6366f1; border-width: 2px; }
+          .fc .fc-timegrid-now-indicator-arrow { border-color: #6366f1; }
+          .fc .fc-list-event-title { font-size: 0.85rem; font-weight: 600; }
+          .fc .fc-list-event-time { font-size: 0.78rem; color: #9ca3af; }
+          .fc .fc-list-day-cushion { background: #f9fafb; font-size: 0.8rem; font-weight: 700; color: #6366f1; }
+          .fc .fc-list-table { border: none; }
+          .fc .fc-daygrid-day-number { font-size: 0.78rem; font-weight: 600; color: #9ca3af; text-decoration: none; padding: 4px 6px; }
+          .fc .fc-daygrid-day.fc-day-today .fc-daygrid-day-number { color: #6366f1; background: #eef2ff; border-radius: 50%; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; }
+          .fc .fc-daygrid-day { border-color: #f3f4f6; }
+          .fc .fc-timegrid-axis { border: none; width: 36px !important; }
+          .fc .fc-timegrid-axis-cushion { font-size: 0.65rem; color: #d1d5db; max-width: 36px; }
           .fc .fc-col-header-cell { vertical-align: top; }
-.fc .fc-col-header-cell-cushion { display: block; padding-bottom: 2px; }
-.weather-tag { font-size: 0.7rem; color: #6b7280; text-align: center; padding-bottom: 4px; line-height: 1.3; }
+          .fc .fc-col-header-cell-cushion { display: block; padding-bottom: 2px; }
+          .weather-tag { font-size: 0.7rem; color: #6b7280; text-align: center; padding-bottom: 4px; line-height: 1.3; }
         `}</style>
         <FullCalendar
          plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin, listPlugin, rrulePlugin]}
@@ -374,7 +396,32 @@ const toISO = (str) => {
   }}
   eventClick={openEdit}
   height="100%"
+    slotMinTime="06:00:00"
+  slotMaxTime="21:00:00"
+  expandRows={true}
+  nowIndicator={true}
   dayMaxEvents={3}
+  eventContent={(arg) => {
+  const emoji = arg.event.extendedProps.category && arg.event.extendedProps.category !== 'other'
+    ? getCategoryEmoji(arg.event.extendedProps.category) + ' '
+    : ''
+  return (
+    <div style={{
+      backgroundColor: arg.event.backgroundColor,
+      borderRadius: '999px',
+      padding: '2px 8px',
+      fontSize: '0.72rem',
+      fontWeight: '500',
+      color: 'white',
+      overflow: 'hidden',
+      textOverflow: 'ellipsis',
+      whiteSpace: 'nowrap',
+      width: '100%',
+    }}>
+      {emoji}{arg.event.title.replace(/^[\u{1F300}-\u{1FFFF}]\s*/u, '')}
+    </div>
+  )
+}}
   dayHeaderContent={(args) => {
   const d = new Date(args.date)
   const dateStr = d.getFullYear() + '-' +
