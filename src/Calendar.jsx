@@ -9,20 +9,20 @@ import { fetchWeeklyWeather } from './weather'
 import rrulePlugin from '@fullcalendar/rrule'
 
 const PERSON_COLORS = {
-  chip: '#6366f1',
-  cristina: '#ec4899',
-  lucia: '#f59e0b',
-  bennett: '#3b82f6',
-  family: '#10b981',
+  chip: '#7C9EE8',       // muted periwinkle blue
+  cristina: '#E88FAD',   // dusty rose
+  lucia: '#E8A87C',      // warm terracotta peach
+  bennett: '#7CC4E8',    // aquatic teal blue
+  family: '#7CCFB8',     // neo mint
 }
 
 const CATEGORY_COLORS = {
-  work: '#64748b',
-  school: '#8b5cf6',
-  health: '#ef4444',
-  sports: '#f97316',
-  social: '#06b6d4',
-  other: '#6b7280',
+  work: '#A0A8C8',       // slate periwinkle
+  school: '#B5A8E8',     // soft lavender
+  health: '#E89A9A',     // muted coral
+  sports: '#E8C47C',     // warm honey
+  social: '#7CC4CF',     // transformative teal
+  other: '#B8BCC8',      // cloud dancer gray
 }
 
 const PERSONS = ['chip', 'cristina', 'lucia', 'bennett', 'family']
