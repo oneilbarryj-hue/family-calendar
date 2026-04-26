@@ -5,6 +5,7 @@ import timeGridPlugin from '@fullcalendar/timegrid'
 import interactionPlugin from '@fullcalendar/interaction'
 import listPlugin from '@fullcalendar/list'
 import { supabase } from './supabaseClient'
+import { fetchWeeklyWeather } from './weather'
 
 const PERSON_COLORS = {
   chip: '#6366f1',
@@ -69,6 +70,7 @@ export default function Calendar({ session }) {
     location: '',
     recurrence: 'none',
   })
+  const [weather, setWeather] = useState({})
 
 const fetchEvents = async () => {
   const { data } = await supabase.from('events').select('*')
@@ -105,6 +107,7 @@ const fetchEvents = async () => {
       .on('postgres_changes', { event: '*', schema: 'public', table: 'events' }, fetchEvents)
       .subscribe()
     return () => supabase.removeChannel(channel)
+    fetchWeeklyWeather().then(setWeather)
   }, [])
 
   const openNew = (selectInfo) => {
@@ -249,6 +252,9 @@ const fetchEvents = async () => {
           .fc td, .fc th { border-color: #f3f4f6; }
           .fc .fc-timegrid-slot { height: 40px; }
           .fc .fc-list-event-title { font-size: 0.85rem; }
+          .fc .fc-col-header-cell { vertical-align: top; }
+.fc .fc-col-header-cell-cushion { display: block; padding-bottom: 2px; }
+.weather-tag { font-size: 0.7rem; color: #6b7280; text-align: center; padding-bottom: 4px; line-height: 1.3; }
         `}</style>
         <FullCalendar
          plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin, listPlugin]}
@@ -274,6 +280,29 @@ const fetchEvents = async () => {
   eventClick={openEdit}
   height="100%"
   dayMaxEvents={3}
+  dayHeaderContent={(args) => {
+  const dateStr = args.date.toISOString().slice(0, 10)
+  const w = weather[dateStr]
+  const dayName = args.date.toLocaleDateString('en-US', { weekday: 'short' })
+  const dayNum = args.date.getDate()
+  return (
+    <div style={{ textAlign: 'center', padding: '4px 0' }}>
+      <div style={{ fontSize: '0.72rem', color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+        {dayName}
+      </div>
+      <div style={{ fontSize: '0.9rem', fontWeight: '600', color: '#111827' }}>
+        {dayNum}
+      </div>
+      {w && view === 'timeGridWeek' && (
+        <div style={{ fontSize: '0.7rem', color: '#6b7280', lineHeight: '1.4' }}>
+          <div>{w.icon}</div>
+          <div style={{ color: '#ef4444', fontWeight: '500' }}>{w.high}°</div>
+          <div style={{ color: '#3b82f6' }}>{w.low}°</div>
+        </div>
+      )}
+    </div>
+  )
+}}
         />
       </div>
 
