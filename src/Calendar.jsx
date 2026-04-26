@@ -73,7 +73,7 @@ export default function Calendar({ session }) {
   const [events, setEvents] = useState([])
   const [modalOpen, setModalOpen] = useState(false)
   const [selectedEvent, setSelectedEvent] = useState(null)
-  const [view, setView] = useState('dayGridMonth')
+const [view, setView] = useState('listWeek')
   const [showLegend, setShowLegend] = useState(false)
 const [form, setForm] = useState({
   title: '',
@@ -314,11 +314,11 @@ const toISO = (str) => {
 
       {/* View switcher */}
       <div className="flex gap-2 px-4 pb-2">
-        {[
-          { key: 'dayGridMonth', label: 'Month' },
-          { key: 'timeGridWeek', label: 'Week' },
-          { key: 'listWeek', label: 'List' },
-        ].map(v => (
+{[
+  { key: 'listWeek', label: 'List' },
+  { key: 'timeGridWeek', label: 'Week' },
+  { key: 'dayGridMonth', label: 'Month' },
+].map(v => (
           <button key={v.key} onClick={() => setView(v.key)}
             className="flex-1 py-1.5 rounded-xl text-sm font-medium transition"
             style={{
@@ -401,6 +401,25 @@ const toISO = (str) => {
   expandRows={true}
   nowIndicator={true}
   dayMaxEvents={3}
+  listDaySideFormat={{ weekday: 'long' }}
+listDayFormat={{ month: 'short', day: 'numeric' }}
+dayCellContent={(args) => {
+  const d = new Date(args.date)
+  const dateStr = d.getFullYear() + '-' +
+    String(d.getMonth() + 1).padStart(2, '0') + '-' +
+    String(d.getDate()).padStart(2, '0')
+  const w = weather[dateStr]
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+      <span>{args.dayNumberText}</span>
+      {w && (
+        <span style={{ fontSize: '0.75rem', color: '#6b7280' }}>
+          {w.icon} {w.high}°↑ {w.low}°↓
+        </span>
+      )}
+    </div>
+  )
+}}
   eventContent={(arg) => {
   const emoji = arg.event.extendedProps.category && arg.event.extendedProps.category !== 'other'
     ? getCategoryEmoji(arg.event.extendedProps.category) + ' '
