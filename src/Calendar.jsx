@@ -27,10 +27,21 @@ const PERSONS = ['chip', 'cristina', 'lucia', 'bennett', 'family']
 const CATEGORIES = ['work', 'school', 'health', 'sports', 'social', 'other']
 const RECURRENCE = ['none', 'weekly', 'monthly', 'annually']
 
+function getCategoryEmoji(category) {
+  const emojis = {
+    work: '💼',
+    school: '🎒',
+    health: '❤️',
+    sports: '⚽',
+    social: '🎉',
+    other: '',
+  }
+  return emojis[category] || ''
+}
+
 function getColor(person, category) {
-  return category !== 'other'
-    ? CATEGORY_COLORS[category]
-    : PERSON_COLORS[person] || '#10b981'
+  return PERSON_COLORS[person] || '#10b981'
+}'
 }
 
 function buildRRule(recurrence) {
@@ -59,30 +70,34 @@ export default function Calendar({ session }) {
     recurrence: 'none',
   })
 
-  const fetchEvents = async () => {
-    const { data } = await supabase.from('events').select('*')
-    const expanded = []
-    data?.forEach(e => {
-      expanded.push({
-        id: e.id,
-        title: e.title,
-        start: e.start_time,
-        end: e.end_time,
-        allDay: e.all_day,
-        backgroundColor: e.color,
-        borderColor: e.color,
-        textColor: '#ffffff',
-        rrule: e.recurrence ? buildRRule(e.recurrence)?.replace('RRULE:', '') : undefined,
-        extendedProps: {
-          person: e.person,
-          category: e.category,
-          location: e.location,
-          recurrence: e.recurrence,
-        }
-      })
+const fetchEvents = async () => {
+  const { data } = await supabase.from('events').select('*')
+  const expanded = []
+  data?.forEach(e => {
+    const categoryLabel = e.category && e.category !== 'other'
+      ? `${getCategoryEmoji(e.category)} ${e.title}`
+      : e.title
+    expanded.push({
+      id: e.id,
+      title: categoryLabel,
+      start: e.start_time,
+      end: e.end_time,
+      allDay: e.all_day,
+      backgroundColor: PERSON_COLORS[e.person] || '#10b981',
+      borderColor: PERSON_COLORS[e.person] || '#10b981',
+      textColor: '#ffffff',
+      extendedProps: {
+        person: e.person,
+        category: e.category,
+        location: e.location,
+        recurrence: e.recurrence,
+        reminder: e.reminder,
+        rawTitle: e.title,
+      }
     })
-    setEvents(expanded)
-  }
+  })
+  setEvents(expanded)
+}
 
   useEffect(() => {
     fetchEvents()
@@ -174,27 +189,32 @@ export default function Calendar({ session }) {
         </div>
       </div>
 
-      {/* Collapsible Legend */}
-      {showLegend && (
-        <div className="px-4 pb-2 space-y-1">
-          <div className="flex flex-wrap gap-2 text-xs">
-            {PERSONS.map(p => (
-              <span key={p} className="flex items-center gap-1">
-                <span className="w-2.5 h-2.5 rounded-full" style={{ background: PERSON_COLORS[p] }} />
-                {label(p)}
-              </span>
-            ))}
-          </div>
-          <div className="flex flex-wrap gap-2 text-xs">
-            {CATEGORIES.map(c => (
-              <span key={c} className="flex items-center gap-1">
-                <span className="w-2.5 h-2.5 rounded-full" style={{ background: CATEGORY_COLORS[c] }} />
-                {label(c)}
-              </span>
-            ))}
-          </div>
-        </div>
-      )}
+{/* Legend */}
+{showLegend && (
+  <div className="px-4 pb-2 space-y-2">
+    <div>
+      <p className="text-xs text-gray-400 uppercase tracking-wide mb-1">People</p>
+      <div className="flex flex-wrap gap-2 text-xs">
+        {PERSONS.map(p => (
+          <span key={p} className="flex items-center gap-1.5 bg-white border border-gray-100 rounded-full px-2.5 py-1 shadow-sm">
+            <span className="w-2.5 h-2.5 rounded-full" style={{ background: PERSON_COLORS[p] }} />
+            {label(p)}
+          </span>
+        ))}
+      </div>
+    </div>
+    <div>
+      <p className="text-xs text-gray-400 uppercase tracking-wide mb-1">Categories</p>
+      <div className="flex flex-wrap gap-2 text-xs">
+        {CATEGORIES.map(c => (
+          <span key={c} className="flex items-center gap-1.5 bg-white border border-gray-100 rounded-full px-2.5 py-1 shadow-sm">
+            {getCategoryEmoji(c)} {label(c)}
+          </span>
+        ))}
+      </div>
+    </div>
+  </div>
+)}
 
       {/* View switcher */}
       <div className="flex gap-2 px-4 pb-2">
