@@ -400,26 +400,26 @@ const toISO = (str) => {
   slotMaxTime="21:00:00"
   expandRows={true}
   nowIndicator={true}
-  dayMaxEvents={3}
-  listDaySideFormat={{ weekday: 'long' }}
-listDayFormat={{ month: 'short', day: 'numeric' }}
-dayCellContent={(args) => {
-  const d = new Date(args.date)
-  const dateStr = d.getFullYear() + '-' +
-    String(d.getMonth() + 1).padStart(2, '0') + '-' +
-    String(d.getDate()).padStart(2, '0')
+  nowIndicator={true}
+viewDidMount={() => {}}
+eventDidMount={(info) => {
+  if (view !== 'listWeek') return
+  const dayEl = info.el.closest('tr')?.previousElementSibling
+  if (!dayEl || dayEl.dataset.weatherAdded) return
+  const dateCell = dayEl.querySelector('.fc-list-day-cushion')
+  if (!dateCell) return
+  const dateStr = info.event.startStr?.slice(0, 10)
   const w = weather[dateStr]
-  return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-      <span>{args.dayNumberText}</span>
-      {w && (
-        <span style={{ fontSize: '0.75rem', color: '#6b7280' }}>
-          {w.icon} {w.high}°↑ {w.low}°↓
-        </span>
-      )}
-    </div>
-  )
+  if (w && !dayEl.dataset.weatherAdded) {
+    dayEl.dataset.weatherAdded = 'true'
+    const tag = document.createElement('span')
+    tag.style.cssText = 'margin-left:10px;font-size:0.75rem;color:#6b7280;font-weight:500;'
+    tag.textContent = `${w.icon} ${w.high}° / ${w.low}°`
+    dateCell.appendChild(tag)
+  }
 }}
+  dayMaxEvents={3}
+
   eventContent={(arg) => {
   const emoji = arg.event.extendedProps.category && arg.event.extendedProps.category !== 'other'
     ? getCategoryEmoji(arg.event.extendedProps.category) + ' '
