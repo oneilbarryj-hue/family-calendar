@@ -371,6 +371,7 @@ const toISO = (str) => {
           .fc .fc-col-header-cell { vertical-align: top; }
           .fc .fc-col-header-cell-cushion { display: block; padding-bottom: 2px; }
           .weather-tag { font-size: 0.7rem; color: #6b7280; text-align: center; padding-bottom: 4px; line-height: 1.3; }
+          .fc .fc-list-event-dot { display: none; }
         `}</style>
         <FullCalendar
          plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin, listPlugin, rrulePlugin]}
