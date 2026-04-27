@@ -5,7 +5,7 @@ import Calendar from './Calendar'
 import TodoList from './TodoList'
 import BuyList from './BuyList'
 import Countdown from './Countdown'
-import { Calendar, CheckSquare, ShoppingCart, Timer } from 'lucide-react'
+import { Calendar as CalendarIcon, CheckSquare, ShoppingCart, Timer } from 'lucide-react'
 
 export default function App() {
   const [session, setSession] = useState(null)
@@ -23,7 +23,7 @@ export default function App() {
   if (!session) return <Login />
 
 const NAV_ITEMS = [
-  { key: 'calendar', label: 'Calendar', icon: Calendar },
+  { key: 'calendar', label: 'Calendar', icon: CalendarIcon },
   { key: 'todo', label: 'To-Do', icon: CheckSquare },
   { key: 'buylist', label: 'Buy List', icon: ShoppingCart },
   { key: 'countdown', label: 'Countdown', icon: Timer },
