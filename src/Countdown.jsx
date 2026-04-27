@@ -68,13 +68,14 @@ export default function Countdown({ session, calendarEvents }) {
   }
 
   // Merge manual countdowns with upcoming calendar events marked as countdowns
-  const calendarCountdowns = (calendarEvents || [])
+const calendarCountdowns = (calendarEvents || [])
     .filter(e => {
       const days = daysUntil(e.start)
-      return days >= 0 && days <= 60
+      return days > 0 && days <= 365 && e.extendedProps?.show_countdown === true
     })
     .map(e => ({
       id: `cal-${e.id}`,
+      calendarId: e.id,
       title: e.extendedProps?.rawTitle || e.title,
       target_date: e.start?.slice(0, 10),
       person: e.extendedProps?.person || 'family',
@@ -83,11 +84,15 @@ export default function Countdown({ session, calendarEvents }) {
     }))
 
   const allCountdowns = [
-    ...countdowns.filter(c => daysUntil(c.target_date) >= 0),
+  ...countdowns.filter(c => daysUntil(c.target_date) > 0),
     ...calendarCountdowns.filter(c =>
       !countdowns.find(m => m.title.toLowerCase() === c.title.toLowerCase())
     )
   ].sort((a, b) => new Date(a.target_date) - new Date(b.target_date))
+
+  const removeCalendarCountdown = async (eventId) => {
+  await supabase.from('events').update({ show_countdown: false }).eq('id', eventId)
+}
 
   return (
     <div className="flex-1 flex flex-col overflow-hidden">
@@ -149,12 +154,17 @@ export default function Countdown({ session, calendarEvents }) {
                 </div>
 
                 {/* Delete — only for manual entries */}
-                {!c.fromCalendar && (
-                  <button onClick={() => deleteCountdown(c.id)}
-                    className="text-gray-300 hover:text-red-400 text-xl leading-none flex-shrink-0">
-                    ×
-                  </button>
-                )}
+                {!c.fromCalendar ? (
+  <button onClick={() => deleteCountdown(c.id)}
+    className="text-gray-300 hover:text-red-400 text-xl leading-none flex-shrink-0">
+    ×
+  </button>
+) : (
+  <button onClick={() => removeCalendarCountdown(c.calendarId)}
+    className="text-gray-300 hover:text-red-400 text-xl leading-none flex-shrink-0">
+    ×
+  </button>
+)}
               </div>
             </div>
           )

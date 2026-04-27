@@ -178,6 +178,7 @@ export default function Calendar({ session, onEventsLoaded }) {
   const [weather, setWeather] = useState({})
 const [isMobile, setIsMobile] = useState(window.innerWidth < 768)
 
+
 useEffect(() => {
   const handleResize = () => setIsMobile(window.innerWidth < 768)
   window.addEventListener('resize', handleResize)
@@ -186,7 +187,8 @@ useEffect(() => {
   const [form, setForm] = useState({
     title: '', start: '', end: '', allDay: false,
     person: 'family', category: 'other',
-    location: '', recurrence: 'none', recurrence_end: '', reminder: 30,
+    location: '', recurrence: 'none', recurrence_end: '', reminder: 30, show_countdown: false,
+
   })
 
   const fetchEvents = async () => {
@@ -208,6 +210,7 @@ useEffect(() => {
           recurrence_end: e.recurrence_end,
           reminder: e.reminder,
           rawTitle: e.title,
+          show_countdown: e.show_countdown,
         }
       }
       if (e.recurrence && e.recurrence !== 'none') {
@@ -265,7 +268,7 @@ useEffect(() => {
     setForm({
       title: '', start: startStr, end: endStr, allDay: false,
       person: 'family', category: 'other',
-      location: '', recurrence: 'none', recurrence_end: '', reminder: 30,
+      location: '', recurrence: 'none', recurrence_end: '', reminder: 30, show_countdown: false,
     })
     setModalOpen(true)
   }
@@ -284,6 +287,7 @@ useEffect(() => {
       recurrence: ev.extendedProps?.recurrence || 'none',
       recurrence_end: ev.extendedProps?.recurrence_end || '',
       reminder: ev.extendedProps?.reminder || 30,
+      show_countdown: ev.extendedProps?.show_countdown || false,
     })
     setModalOpen(true)
   }
@@ -312,6 +316,7 @@ useEffect(() => {
       recurrence: form.recurrence !== 'none' ? form.recurrence : null,
       recurrence_end: form.recurrence_end || null,
       reminder: form.reminder || 30,
+      show_countdown: form.show_countdown || false,
       user_id: session.user.id,
     }
     if (selectedEvent) {
@@ -722,7 +727,16 @@ useEffect(() => {
                 ))}
               </div>
             </div>
-
+<label className="flex items-center gap-3 cursor-pointer">
+  <div
+    onClick={() => setForm({...form, show_countdown: !form.show_countdown})}
+    className="relative w-12 h-6 rounded-full transition"
+    style={{ background: form.show_countdown ? '#6366f1' : '#e5e7eb' }}>
+    <div className="absolute top-1 w-4 h-4 bg-white rounded-full shadow transition-all"
+      style={{ left: form.show_countdown ? '26px' : '4px' }} />
+  </div>
+  <span className="text-sm text-gray-600 font-medium">Include in countdowns ⏳</span>
+</label>
             <div className="flex gap-2 pt-2 pb-2">
               <button onClick={saveEvent}
                 className="flex-1 bg-indigo-600 text-white rounded-xl py-3 text-sm font-bold">
