@@ -4,10 +4,12 @@ import Login from './Login'
 import Calendar from './Calendar'
 import TodoList from './TodoList'
 import BuyList from './BuyList'
+import Countdown from './Countdown'
 
 export default function App() {
   const [session, setSession] = useState(null)
   const [activeNav, setActiveNav] = useState('calendar')
+  const [calendarEvents, setCalendarEvents] = useState([])
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => setSession(session))
@@ -23,6 +25,7 @@ export default function App() {
     { key: 'calendar', label: 'Calendar', emoji: '📅' },
     { key: 'todo', label: 'To-Do', emoji: '✅' },
     { key: 'buylist', label: 'Buy List', emoji: '🛍️' },
+    { key: 'countdown', label: 'Countdown', emoji: '⏳' },
   ]
 
   return (
@@ -51,9 +54,10 @@ export default function App() {
 
       {/* Main content */}
       <div className="flex-1 flex flex-col overflow-hidden">
-        {activeNav === 'calendar' && <Calendar session={session} />}
+        {activeNav === 'calendar' && <Calendar session={session} onEventsLoaded={setCalendarEvents} />}
         {activeNav === 'todo' && <TodoList session={session} />}
         {activeNav === 'buylist' && <BuyList session={session} />}
+        {activeNav === 'countdown' && <Countdown session={session} calendarEvents={calendarEvents} />}
       </div>
 
       {/* Bottom nav — mobile only */}
@@ -65,12 +69,11 @@ export default function App() {
             style={{
               color: activeNav === item.key ? '#6366f1' : '#9ca3af',
             }}>
-            <span className="text-2xl">{item.emoji}</span>
+            <span className="text-xl">{item.emoji}</span>
             <span className="text-xs font-semibold">{item.label}</span>
           </button>
         ))}
       </div>
-
     </div>
   )
 }

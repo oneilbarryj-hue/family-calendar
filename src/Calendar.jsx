@@ -169,13 +169,20 @@ function AgendaView({ events, onEventClick, onDateClick, weather }) {
   )
 }
 
-export default function Calendar({ session }) {
+export default function Calendar({ session, onEventsLoaded }) {
   const [events, setEvents] = useState([])
   const [modalOpen, setModalOpen] = useState(false)
   const [selectedEvent, setSelectedEvent] = useState(null)
   const [view, setView] = useState('agenda')
   const [showLegend, setShowLegend] = useState(false)
   const [weather, setWeather] = useState({})
+const [isMobile, setIsMobile] = useState(window.innerWidth < 768)
+
+useEffect(() => {
+  const handleResize = () => setIsMobile(window.innerWidth < 768)
+  window.addEventListener('resize', handleResize)
+  return () => window.removeEventListener('resize', handleResize)
+}, [])
   const [form, setForm] = useState({
     title: '', start: '', end: '', allDay: false,
     person: 'family', category: 'other',
@@ -224,6 +231,7 @@ export default function Calendar({ session }) {
       }
       expanded.push(eventObj)
     })
+    if (onEventsLoaded) onEventsLoaded(expanded)
     setEvents(expanded)
   }
 
@@ -436,7 +444,7 @@ export default function Calendar({ session }) {
           `}</style>
           <FullCalendar
             plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin, rrulePlugin]}
-            initialView={view}
+            initialView={view === 'timeGridWeek' && isMobile ? 'timeGrid' : view}
             key={view}
             headerToolbar={{
               left: 'prev,next',
@@ -455,6 +463,13 @@ export default function Calendar({ session }) {
             nowIndicator={true}
             dayMaxEvents={3}
             snapDuration="00:15:00"
+            views={{
+  timeGrid: {
+    type: 'timeGrid',
+    duration: { days: 3 },
+    buttonText: 'Week'
+  }
+}}
             dayHeaderContent={(args) => {
               const d = new Date(args.date)
               const dateStr = d.getFullYear() + '-' +
@@ -482,26 +497,28 @@ export default function Calendar({ session }) {
               )
             }}
             eventContent={(arg) => {
-              const emoji = arg.event.extendedProps?.category && arg.event.extendedProps.category !== 'other'
-                ? getCategoryEmoji(arg.event.extendedProps.category) + ' '
-                : ''
-              return (
-                <div style={{
-                  backgroundColor: arg.event.backgroundColor,
-                  borderRadius: '999px',
-                  padding: '2px 8px',
-                  fontSize: '0.72rem',
-                  fontWeight: '600',
-                  color: 'white',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                  whiteSpace: 'nowrap',
-                  width: '100%',
-                }}>
-                  {emoji}{arg.event.extendedProps?.rawTitle || arg.event.title}
-                </div>
-              )
-            }}
+  const emoji = arg.event.extendedProps?.category && arg.event.extendedProps.category !== 'other'
+    ? getCategoryEmoji(arg.event.extendedProps.category) + ' '
+    : ''
+  return (
+    <div style={{
+      backgroundColor: arg.event.backgroundColor,
+      borderRadius: '12px',
+      padding: '3px 8px',
+      fontSize: '0.72rem',
+      fontWeight: '600',
+      color: 'white',
+      overflow: 'hidden',
+      whiteSpace: 'normal',
+      wordBreak: 'break-word',
+      width: '100%',
+      height: '100%',
+      lineHeight: '1.3',
+    }}>
+      {emoji}{arg.event.extendedProps?.rawTitle || arg.event.title}
+    </div>
+  )
+}}
           />
         </div>
       )}
