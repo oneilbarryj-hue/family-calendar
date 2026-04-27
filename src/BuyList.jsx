@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { supabase } from './supabaseClient'
+import { ShoppingCart } from 'lucide-react'
 
 const CATEGORIES = [
   { key: 'groceries', label: 'Groceries', emoji: '🛒' },
@@ -69,7 +70,9 @@ export default function BuyList({ session }) {
     <div className="flex-1 flex flex-col overflow-hidden">
       {/* Header */}
       <div className="px-4 pt-5 pb-3">
-        <h2 className="text-xl font-bold text-gray-800 mb-3">🛍️ Buy List</h2>
+        <h2 className="text-xl font-bold text-gray-800 mb-3 flex items-center gap-2">
+  <ShoppingCart size={22} className="text-indigo-500" /> Buy List
+</h2>
 
         {/* Category tabs */}
         <div className="flex gap-2">

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { supabase } from './supabaseClient'
+import { CheckSquare, Trash2 } from 'lucide-react'
 
 const PERSONS = ['chip', 'cristina', 'lucia', 'bennett', 'family']
 const PERSON_COLORS = {
@@ -80,7 +81,9 @@ export default function TodoList({ session }) {
     <div className="flex-1 flex flex-col overflow-hidden">
       {/* Header */}
       <div className="px-4 pt-5 pb-3">
-        <h2 className="text-xl font-bold text-gray-800 mb-3">✅ To-Do</h2>
+        <h2 className="text-xl font-bold text-gray-800 mb-3 flex items-center gap-2">
+  <CheckSquare size={22} className="text-indigo-500" /> To-Do
+</h2>
 
         {/* Filter pills */}
         <div className="flex gap-2 flex-wrap">

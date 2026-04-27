@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { supabase } from './supabaseClient'
+import { Timer } from 'lucide-react'
 
 const PERSONS = ['chip', 'cristina', 'lucia', 'bennett', 'family']
 const PERSON_COLORS = {
@@ -98,7 +99,9 @@ const calendarCountdowns = (calendarEvents || [])
     <div className="flex-1 flex flex-col overflow-hidden">
       {/* Header */}
       <div className="px-4 pt-5 pb-3 flex items-center justify-between">
-        <h2 className="text-xl font-bold text-gray-800">⏳ Countdowns</h2>
+        <h2 className="text-xl font-bold text-gray-800 flex items-center gap-2">
+  <Timer size={22} className="text-indigo-500" /> Countdowns
+</h2>
         <button onClick={() => setModalOpen(true)}
           className="bg-indigo-600 text-white rounded-xl px-4 py-2 text-sm font-bold">
           + Add

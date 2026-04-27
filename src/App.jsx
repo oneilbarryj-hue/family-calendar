@@ -5,6 +5,7 @@ import Calendar from './Calendar'
 import TodoList from './TodoList'
 import BuyList from './BuyList'
 import Countdown from './Countdown'
+import { Calendar, CheckSquare, ShoppingCart, Timer } from 'lucide-react'
 
 export default function App() {
   const [session, setSession] = useState(null)
@@ -21,12 +22,12 @@ export default function App() {
 
   if (!session) return <Login />
 
-  const NAV_ITEMS = [
-    { key: 'calendar', label: 'Calendar', emoji: '📅' },
-    { key: 'todo', label: 'To-Do', emoji: '✅' },
-    { key: 'buylist', label: 'Buy List', emoji: '🛍️' },
-    { key: 'countdown', label: 'Countdown', emoji: '⏳' },
-  ]
+const NAV_ITEMS = [
+  { key: 'calendar', label: 'Calendar', icon: Calendar },
+  { key: 'todo', label: 'To-Do', icon: CheckSquare },
+  { key: 'buylist', label: 'Buy List', icon: ShoppingCart },
+  { key: 'countdown', label: 'Countdown', icon: Timer },
+]
 
   return (
     <div className="flex h-screen bg-gray-50 overflow-hidden">
@@ -46,7 +47,7 @@ export default function App() {
               background: activeNav === item.key ? '#eef2ff' : 'transparent',
               color: activeNav === item.key ? '#6366f1' : '#9ca3af',
             }}>
-            <span className="text-2xl">{item.emoji}</span>
+            <item.icon size={22} />
             <span className="text-xs font-semibold">{item.label}</span>
           </button>
         ))}
@@ -69,7 +70,7 @@ export default function App() {
             style={{
               color: activeNav === item.key ? '#6366f1' : '#9ca3af',
             }}>
-            <span className="text-xl">{item.emoji}</span>
+            <item.icon size={22} />
             <span className="text-xs font-semibold">{item.label}</span>
           </button>
         ))}
