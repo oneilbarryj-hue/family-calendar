@@ -34,11 +34,6 @@ function getColor(person) {
   return PERSON_COLORS[person] || '#7CCFB8'
 }
 
-function getCategoryEmoji(category) {
-  const emojis = { work: '💼', school: '🎒', health: '❤️', sports: '⚽', social: '🎉', other: '' }
-  return emojis[category] || ''
-}
-
 function label(str) {
   return str.charAt(0).toUpperCase() + str.slice(1)
 }
@@ -165,9 +160,9 @@ function AgendaView({ events, onEventClick, onDateClick, weather }) {
                     style={{ backgroundColor: event.backgroundColor + '33', borderLeft: `4px solid ${event.backgroundColor}` }}
                   >
                     <div className="flex-1">
-                      <div className="font-semibold text-gray-800 text-sm">
-                        {getCategoryEmoji(event.extendedProps?.category)} {event.extendedProps?.rawTitle || event.title}
-                      </div>
+<div className="font-semibold text-gray-800 text-sm">
+  {event.extendedProps?.rawTitle || event.title}
+</div>
                       {!event.allDay && (
                         <div className="text-xs text-gray-400 mt-0.5">
                           {formatTime(event.start)}{event.end ? ` – ${formatTime(event.end)}` : ''}
@@ -404,7 +399,7 @@ useEffect(() => {
             <div className="flex flex-wrap gap-2">
               {CATEGORIES.map(c => (
                 <span key={c} className="text-xs text-gray-600 bg-white border border-gray-200 rounded-full px-3 py-1">
-                  {getCategoryEmoji(c)} {label(c)}
+                  {label(c)}
                 </span>
               ))}
             </div>
@@ -532,27 +527,24 @@ useEffect(() => {
               )
             }}
             eventContent={(arg) => {
-  const emoji = arg.event.extendedProps?.category && arg.event.extendedProps.category !== 'other'
-    ? getCategoryEmoji(arg.event.extendedProps.category) + ' '
-    : ''
-  return (
-    <div style={{
-      backgroundColor: arg.event.backgroundColor,
-      borderRadius: '12px',
-      padding: '3px 8px',
-      fontSize: '0.72rem',
-      fontWeight: '600',
-      color: 'white',
-      overflow: 'hidden',
-      whiteSpace: 'normal',
-      wordBreak: 'break-word',
-      width: '100%',
-      height: '100%',
-      lineHeight: '1.3',
-    }}>
-      {emoji}{arg.event.extendedProps?.rawTitle || arg.event.title}
-    </div>
-  )
+return (
+  <div style={{
+    backgroundColor: arg.event.backgroundColor,
+    borderRadius: '999px',
+    padding: '2px 8px',
+    fontSize: '0.72rem',
+    fontWeight: '600',
+    color: 'white',
+    overflow: 'hidden',
+    whiteSpace: 'normal',
+    wordBreak: 'break-word',
+    width: '100%',
+    height: '100%',
+    lineHeight: '1.3',
+  }}>
+    {arg.event.extendedProps?.rawTitle || arg.event.title}
+  </div>
+)
 }}
           />
         </div>
@@ -737,7 +729,7 @@ useEffect(() => {
                       borderColor: CATEGORY_COLORS[c],
                       color: form.category === c ? 'white' : CATEGORY_COLORS[c],
                     }}>
-                    {getCategoryEmoji(c)} {label(c)}
+                    {label(c)}
                   </button>
                 ))}
               </div>
