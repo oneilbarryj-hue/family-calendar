@@ -122,7 +122,7 @@ function AgendaView({ events, onEventClick, onDateClick, weather }) {
   }
 
   return (
-    <div className="flex-1 overflow-y-auto px-4 pb-24">
+    <div className="flex-1 overflow-y-auto px-4 pb-32 space-y-3">
       {days.map((date, i) => {
         const dayEvents = getEventsForDay(date)
         const { dayName, dayNum, month, isToday } = formatDayHeader(date)
@@ -563,14 +563,14 @@ useEffect(() => {
             String(now.getMinutes()).padStart(2, '0')
           openNew({ startStr: localStr, allDay: false })
         }}
-        className="fixed bottom-6 right-6 w-14 h-14 bg-indigo-600 text-white rounded-full shadow-lg text-3xl flex items-center justify-center z-40">
+        className="fixed bottom-20 right-6 w-14 h-14 bg-indigo-600 text-white rounded-full shadow-lg text-3xl flex items-center justify-center z-40">
         +
       </button>
 
       {/* Modal */}
       {modalOpen && (
         <div className="fixed inset-0 bg-black/40 flex items-end justify-center z-50">
-          <div className="bg-white rounded-t-3xl p-6 w-full max-w-lg space-y-4 overflow-y-auto max-h-[92vh]">
+          <div className="bg-white rounded-t-3xl p-6 w-full max-w-lg space-y-4 overflow-y-auto max-h-[80vh]">
             <div className="flex items-center justify-between">
               <h2 className="text-lg font-bold text-gray-800">{selectedEvent ? 'Edit Event' : 'New Event'}</h2>
               <button onClick={() => setModalOpen(false)} className="text-gray-400 text-2xl leading-none">&times;</button>
