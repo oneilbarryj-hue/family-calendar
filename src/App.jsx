@@ -41,12 +41,11 @@ const NAV_ITEMS = [
         </div>
         {NAV_ITEMS.map(item => (
           <button key={item.key}
-            onClick={() => setActiveNav(item.key)}
-            className="flex flex-col items-center gap-1 w-16 py-3 rounded-2xl transition"
-            style={{
-              background: activeNav === item.key ? '#eef2ff' : 'transparent',
-              color: activeNav === item.key ? '#6366f1' : '#9ca3af',
-            }}>
+  onClick={() => setActiveNav(item.key)}
+  className="flex-1 flex flex-col items-center pt-3 pb-2 gap-1 transition"
+  style={{
+    color: activeNav === item.key ? '#6366f1' : '#9ca3af',
+  }}>
             <item.icon size={22} />
             <span className="text-xs font-semibold">{item.label}</span>
           </button>
@@ -62,7 +61,7 @@ const NAV_ITEMS = [
       </div>
 
       {/* Bottom nav — mobile only */}
-      <div className="fixed bottom-0 left-0 right-0 md:hidden bg-white border-t border-gray-100 flex z-50 shadow-lg">
+      <div className="fixed bottom-0 left-0 right-0 md:hidden bg-white border-t border-gray-100 flex z-50 shadow-lg" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
         {NAV_ITEMS.map(item => (
           <button key={item.key}
             onClick={() => setActiveNav(item.key)}
