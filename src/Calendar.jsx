@@ -71,19 +71,40 @@ function AgendaView({ events, onEventClick, onDateClick, weather }) {
   const today = new Date()
   today.setHours(0, 0, 0, 0)
   const days = []
-  for (let i = 0; i < 14; i++) {
+  for (let i = 0; i < 30; i++) {
     const d = new Date(today)
     d.setDate(today.getDate() + i)
     days.push(d)
   }
 
   const getEventsForDay = (date) => {
-    return events.filter(e => {
+  return events.filter(e => {
+    // Handle regular events
+    if (e.start) {
       const start = new Date(e.start)
       start.setHours(0, 0, 0, 0)
       return start.getTime() === date.getTime()
-    }).sort((a, b) => new Date(a.start) - new Date(b.start))
-  }
+    }
+    // Handle rrule recurring events
+    if (e.rrule) {
+      const dtstart = new Date(e.rrule.dtstart)
+      dtstart.setHours(0, 0, 0, 0)
+      // Check if this date matches the recurrence pattern
+      if (date < dtstart) return false
+      if (e.rrule.until && date > new Date(e.rrule.until)) return false
+      const freq = e.rrule.freq
+      const diffDays = Math.round((date - dtstart) / (1000 * 60 * 60 * 24))
+      if (freq === 'WEEKLY') return diffDays % 7 === 0
+      if (freq === 'MONTHLY') return date.getDate() === dtstart.getDate()
+      if (freq === 'YEARLY') return date.getDate() === dtstart.getDate() && date.getMonth() === dtstart.getMonth()
+    }
+    return false
+  }).sort((a, b) => {
+    const aTime = a.start ? new Date(a.start) : new Date(a.rrule?.dtstart)
+    const bTime = b.start ? new Date(b.start) : new Date(b.rrule?.dtstart)
+    return aTime - bTime
+  })
+}
 
   const formatDayHeader = (date) => {
     const isToday = date.getTime() === today.getTime()
