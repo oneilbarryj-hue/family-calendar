@@ -6,7 +6,8 @@ import interactionPlugin from '@fullcalendar/interaction'
 import rrulePlugin from '@fullcalendar/rrule'
 import { supabase } from './supabaseClient'
 import { fetchWeeklyWeather } from './weather'
-import { CalendarDays, Menu } from 'lucide-react'
+import { CalendarDays, Menu, Bell } from 'lucide-react'
+import { subscribeToPush } from './usePushNotifications'
 
 const PERSON_COLORS = {
   chip: '#7C9EE8',
@@ -368,6 +369,11 @@ useEffect(() => {
   <CalendarDays size={22} className="text-indigo-500" /> ONeil Family
 </h1>
         <div className="flex items-center gap-2">
+          <button
+  onClick={() => subscribeToPush(session.user.id)}
+  className="text-xs text-indigo-500 font-semibold border border-indigo-200 rounded-full px-3 py-1 flex items-center gap-1">
+  <Bell size={14} /> Alerts
+</button>
           <button onClick={() => setShowLegend(!showLegend)}
             className="text-xs text-indigo-500 font-semibold border border-indigo-200 rounded-full px-3 py-1">
             {showLegend ? 'Hide' : 'Legend'}
