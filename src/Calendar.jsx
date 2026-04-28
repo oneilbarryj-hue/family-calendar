@@ -29,6 +29,8 @@ const CATEGORY_COLORS = {
 const PERSONS = ['chip', 'cristina', 'lucia', 'bennett', 'family']
 const CATEGORIES = ['work', 'school', 'health', 'sports', 'social', 'other']
 const RECURRENCE = ['none', 'weekly', 'monthly', 'annually']
+const [filterPerson, setFilterPerson] = useState(null)
+const [filterCategory, setFilterCategory] = useState(null)
 
 function getColor(person) {
   return PERSON_COLORS[person] || '#7CCFB8'
@@ -355,6 +357,15 @@ useEffect(() => {
     }
   }
 
+  const filteredEvents = events.filter(e => {
+  if (filterPerson && e.extendedProps?.person !== filterPerson) return false
+  if (filterCategory && e.extendedProps?.category !== filterCategory) return false
+  return true
+})
+
+return (
+  <div className="h-screen flex flex-col bg-gray-50 overflow-hidden"></div>
+
   return (
     <div className="h-screen flex flex-col bg-gray-50 overflow-hidden">
 
@@ -381,31 +392,52 @@ useEffect(() => {
       </div>
 
       {/* Legend */}
-      {showLegend && (
-        <div className="px-4 pb-2 space-y-2">
-          <div>
-            <p className="text-xs text-gray-400 uppercase tracking-wide mb-1">People</p>
-            <div className="flex flex-wrap gap-2">
-              {PERSONS.map(p => (
-                <span key={p} className="flex items-center gap-1.5 text-xs text-white font-medium px-3 py-1 rounded-full"
-                  style={{ background: PERSON_COLORS[p] }}>
-                  {label(p)}
-                </span>
-              ))}
-            </div>
-          </div>
-          <div>
-            <p className="text-xs text-gray-400 uppercase tracking-wide mb-1">Categories</p>
-            <div className="flex flex-wrap gap-2">
-              {CATEGORIES.map(c => (
-                <span key={c} className="text-xs text-gray-600 bg-white border border-gray-200 rounded-full px-3 py-1">
-                  {label(c)}
-                </span>
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
+{showLegend && (
+  <div className="px-4 pb-2 space-y-2">
+    <div>
+      <p className="text-xs text-gray-400 uppercase tracking-wide mb-1">People</p>
+      <div className="flex flex-wrap gap-2">
+        {PERSONS.map(p => (
+          <button key={p}
+            onClick={() => setFilterPerson(filterPerson === p ? null : p)}
+            className="text-xs text-white font-semibold px-3 py-1 rounded-full transition"
+            style={{
+              background: PERSON_COLORS[p],
+              opacity: filterPerson && filterPerson !== p ? 0.3 : 1,
+              outline: filterPerson === p ? '2px solid #111' : 'none',
+              outlineOffset: '2px',
+            }}>
+            {label(p)}
+          </button>
+        ))}
+      </div>
+    </div>
+    <div>
+      <p className="text-xs text-gray-400 uppercase tracking-wide mb-1">Categories</p>
+      <div className="flex flex-wrap gap-2">
+        {CATEGORIES.map(c => (
+          <button key={c}
+            onClick={() => setFilterCategory(filterCategory === c ? null : c)}
+            className="text-xs text-gray-600 bg-white border border-gray-200 rounded-full px-3 py-1 transition font-medium"
+            style={{
+              opacity: filterCategory && filterCategory !== c ? 0.3 : 1,
+              outline: filterCategory === c ? '2px solid #6366f1' : 'none',
+              outlineOffset: '2px',
+            }}>
+            {label(c)}
+          </button>
+        ))}
+      </div>
+    </div>
+    {(filterPerson || filterCategory) && (
+      <button
+        onClick={() => { setFilterPerson(null); setFilterCategory(null) }}
+        className="text-xs text-red-400 font-semibold">
+        Clear filters
+      </button>
+    )}
+  </div>
+)}
 
       {/* View switcher */}
       <div className="flex gap-2 px-4 pb-3 pt-1">
@@ -428,7 +460,7 @@ useEffect(() => {
       {/* Agenda View */}
       {view === 'agenda' && (
         <AgendaView
-          events={events}
+          events={filteredEvents}
           onEventClick={openEdit}
           onDateClick={(date) => openNew(date)}
           weather={weather}
@@ -481,7 +513,7 @@ useEffect(() => {
               center: 'title',
               right: 'today',
             }}
-            events={events}
+            events={filteredEvents}
             selectable={true}
             selectMirror={true}
             dateClick={(info) => openNew({ startStr: info.dateStr, allDay: info.allDay })}
