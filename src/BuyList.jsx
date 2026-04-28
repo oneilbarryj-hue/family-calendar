@@ -1,12 +1,12 @@
 import { useState, useEffect } from 'react'
 import { supabase } from './supabaseClient'
-import { ShoppingCart } from 'lucide-react'
+import { ShoppingCart, X } from 'lucide-react'
 
 const CATEGORIES = [
-  { key: 'groceries', label: 'Groceries', emoji: '🛒' },
-  { key: 'household', label: 'Household', emoji: '🏠' },
-  { key: 'kids', label: 'Kids', emoji: '👶' },
-  { key: 'wishlist', label: 'Wish List', emoji: '⭐' },
+  { key: 'groceries', label: 'Groceries' },
+  { key: 'household', label: 'Household' },
+  { key: 'kids', label: 'Kids' },
+  { key: 'wishlist', label: 'Wish List' },
 ]
 
 export default function BuyList({ session }) {
@@ -84,7 +84,7 @@ export default function BuyList({ session }) {
                 background: activeTab === cat.key ? '#6366f1' : '#f3f4f6',
                 color: activeTab === cat.key ? 'white' : '#6b7280',
               }}>
-              {cat.emoji}<br />{cat.label}
+              {cat.label}
             </button>
           ))}
         </div>
@@ -124,10 +124,10 @@ export default function BuyList({ session }) {
               onChange={() => toggleItem(item)}
               className="w-5 h-5 rounded cursor-pointer accent-indigo-500" />
             <p className="flex-1 text-sm font-semibold text-gray-800">{item.title}</p>
-            <button onClick={() => deleteItem(item.id)}
-              className="text-gray-300 hover:text-red-400 text-lg leading-none">
-              ×
-            </button>
+<button onClick={() => deleteItem(item.id)}
+  className="text-gray-300 hover:text-red-400">
+  <X size={18} />
+</button>
           </div>
         ))}
 

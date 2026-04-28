@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { supabase } from './supabaseClient'
-import { CheckSquare, Trash2 } from 'lucide-react'
+import { CheckSquare, Trash2, X } from 'lucide-react'
 
 const PERSONS = ['chip', 'cristina', 'lucia', 'bennett', 'family']
 const PERSON_COLORS = {
@@ -163,10 +163,10 @@ export default function TodoList({ session }) {
                 )}
               </div>
             </div>
-            <button onClick={() => deleteTodo(todo.id)}
-              className="text-gray-300 hover:text-red-400 text-lg leading-none">
-              ×
-            </button>
+<button onClick={() => deleteTodo(todo.id)}
+  className="text-gray-300 hover:text-red-400">
+  <X size={18} />
+</button>
           </div>
         ))}
       </div>

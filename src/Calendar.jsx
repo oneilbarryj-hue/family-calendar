@@ -6,7 +6,7 @@ import interactionPlugin from '@fullcalendar/interaction'
 import rrulePlugin from '@fullcalendar/rrule'
 import { supabase } from './supabaseClient'
 import { fetchWeeklyWeather } from './weather'
-import { CalendarDays, Menu, Bell } from 'lucide-react'
+import { CalendarDays, Menu, Bell, X } from 'lucide-react'
 import { subscribeToPush } from './usePushNotifications'
 
 const PERSON_COLORS = {
@@ -579,7 +579,9 @@ useEffect(() => {
           <div className="bg-white rounded-t-3xl p-6 w-full max-w-lg space-y-4 overflow-y-auto max-h-[80vh]">
             <div className="flex items-center justify-between">
               <h2 className="text-lg font-bold text-gray-800">{selectedEvent ? 'Edit Event' : 'New Event'}</h2>
-              <button onClick={() => setModalOpen(false)} className="text-gray-400 text-2xl leading-none">&times;</button>
+              <button onClick={() => setModalOpen(false)} className="text-gray-400">
+  <X size={22} />
+</button>
             </div>
 
             <input

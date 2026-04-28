@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { supabase } from './supabaseClient'
-import { Timer } from 'lucide-react'
+import { Timer, Plus, X } from 'lucide-react'
 
 const PERSONS = ['chip', 'cristina', 'lucia', 'bennett', 'family']
 const PERSON_COLORS = {
@@ -10,8 +10,6 @@ const PERSON_COLORS = {
   bennett: '#7CC4E8',
   family: '#7CCFB8',
 }
-
-const EMOJIS = ['🎉', '✈️', '🎂', '🏖️', '🎄', '🎃', '❤️', '🏆', '🎓', '🏠', '👶', '🎸']
 
 function label(str) {
   return str.charAt(0).toUpperCase() + str.slice(1)
@@ -29,9 +27,9 @@ function daysUntil(dateStr) {
 export default function Countdown({ session, calendarEvents }) {
   const [countdowns, setCountdowns] = useState([])
   const [modalOpen, setModalOpen] = useState(false)
-  const [form, setForm] = useState({
-    title: '', target_date: '', person: 'family', emoji: '🎉'
-  })
+const [form, setForm] = useState({
+  title: '', target_date: '', person: 'family'
+})
 
   const fetchCountdowns = async () => {
     const { data } = await supabase
@@ -102,10 +100,10 @@ const calendarCountdowns = (calendarEvents || [])
         <h2 className="text-xl font-bold text-gray-800 flex items-center gap-2">
   <Timer size={22} className="text-indigo-500" /> Countdowns
 </h2>
-        <button onClick={() => setModalOpen(true)}
-          className="bg-indigo-600 text-white rounded-xl px-4 py-2 text-sm font-bold">
-          + Add
-        </button>
+<button onClick={() => setModalOpen(true)}
+  className="bg-indigo-600 text-white rounded-xl px-4 py-2 text-sm font-bold flex items-center gap-1">
+  <Plus size={16} /> Add
+</button>
       </div>
 
       {/* Countdown cards */}
@@ -137,7 +135,6 @@ const calendarCountdowns = (calendarEvents || [])
                 {/* Info */}
                 <div className="flex-1">
                   <div className="flex items-center gap-2">
-                    <span className="text-lg">{c.emoji}</span>
                     <p className="font-bold text-gray-800 text-base">{c.title}</p>
                   </div>
                   <div className="flex items-center gap-2 mt-1">
@@ -158,15 +155,15 @@ const calendarCountdowns = (calendarEvents || [])
 
                 {/* Delete — only for manual entries */}
                 {!c.fromCalendar ? (
-  <button onClick={() => deleteCountdown(c.id)}
-    className="text-gray-300 hover:text-red-400 text-xl leading-none flex-shrink-0">
-    ×
-  </button>
+<button onClick={() => deleteCountdown(c.id)}
+  className="text-gray-300 hover:text-red-400 flex-shrink-0">
+  <X size={18} />
+</button>
 ) : (
-  <button onClick={() => removeCalendarCountdown(c.calendarId)}
-    className="text-gray-300 hover:text-red-400 text-xl leading-none flex-shrink-0">
-    ×
-  </button>
+<button onClick={() => removeCalendarCountdown(c.calendarId)}
+  className="text-gray-300 hover:text-red-400 flex-shrink-0">
+  <X size={18} />
+</button>
 )}
               </div>
             </div>
@@ -209,22 +206,6 @@ const calendarCountdowns = (calendarEvents || [])
                       color: form.person === p ? 'white' : PERSON_COLORS[p],
                     }}>
                     {label(p)}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <div>
-              <label className="text-xs text-gray-400 uppercase tracking-wide block mb-2">Emoji</label>
-              <div className="flex flex-wrap gap-2">
-                {EMOJIS.map(e => (
-                  <button key={e} onClick={() => setForm({...form, emoji: e})}
-                    className="w-10 h-10 rounded-xl text-xl flex items-center justify-center transition"
-                    style={{
-                      background: form.emoji === e ? '#eef2ff' : '#f9fafb',
-                      border: form.emoji === e ? '2px solid #6366f1' : '2px solid transparent',
-                    }}>
-                    {e}
                   </button>
                 ))}
               </div>
