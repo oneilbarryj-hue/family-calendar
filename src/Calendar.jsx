@@ -29,8 +29,6 @@ const CATEGORY_COLORS = {
 const PERSONS = ['chip', 'cristina', 'lucia', 'bennett', 'family']
 const CATEGORIES = ['work', 'school', 'health', 'sports', 'social', 'other']
 const RECURRENCE = ['none', 'weekly', 'monthly', 'annually']
-const [filterPerson, setFilterPerson] = useState(null)
-const [filterCategory, setFilterCategory] = useState(null)
 
 function getColor(person) {
   return PERSON_COLORS[person] || '#7CCFB8'
@@ -192,6 +190,8 @@ function AgendaView({ events, onEventClick, onDateClick, weather }) {
 export default function Calendar({ session, onEventsLoaded }) {
   const [events, setEvents] = useState([])
   const [modalOpen, setModalOpen] = useState(false)
+  const [filterPerson, setFilterPerson] = useState(null)
+const [filterCategory, setFilterCategory] = useState(null)
   const [selectedEvent, setSelectedEvent] = useState(null)
   const [view, setView] = useState('agenda')
   const [showLegend, setShowLegend] = useState(false)
