@@ -34,6 +34,7 @@ export default async function handler(req, res) {
     .gte('start_time', now.toISOString())
 
   let sent = 0
+console.log(`Found ${subscriptions.length} subscriptions and ${events?.length} events`)
 
   for (const event of events || []) {
     const startTime = new Date(event.start_time)
@@ -42,7 +43,8 @@ export default async function handler(req, res) {
 
     // Check if we should notify now (within 1 minute window)
     const diff = Math.abs(notifyAt - now)
-    if (diff > 60000) continue
+    if (diff > 120000) continue
+    console.log(`Event: ${event.title}, notifyAt: ${notifyAt}, now: ${now}, diff: ${diff}`)
 
     const timeStr = startTime.toLocaleTimeString('en-US', {
       hour: 'numeric', minute: '2-digit', hour12: true
