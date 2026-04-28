@@ -569,7 +569,7 @@ useEffect(() => {
 
       {/* Modal */}
       {modalOpen && (
-        <div className="fixed inset-0 bg-black/40 flex items-end justify-center z-50">
+        <div className="fixed inset-0 bg-black/40 flex items-end justify-center z-50" style={{ paddingBottom: '64px' }}>
           <div className="bg-white rounded-t-3xl p-6 w-full max-w-lg space-y-4 overflow-y-auto max-h-[80vh]">
             <div className="flex items-center justify-between">
               <h2 className="text-lg font-bold text-gray-800">{selectedEvent ? 'Edit Event' : 'New Event'}</h2>
